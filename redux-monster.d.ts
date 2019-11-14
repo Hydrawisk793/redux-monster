@@ -1,7 +1,7 @@
 import { PickExtends } from "./pick-extends";
 import { ReduxReducer } from "./redux-reducer";
 
-declare interface ReduxMonster<S = {}, T = {}, A = {}, R = {}, P = {}>
+declare interface ReduxMonster<S = any, T = any, A = any, R = any, P = any>
 {
     name : string;
 
