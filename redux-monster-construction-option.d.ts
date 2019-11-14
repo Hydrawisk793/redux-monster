@@ -31,11 +31,11 @@ declare type ReduxMonsterPayloadCreatorDefinitions = { [ name : string ] : Redux
 declare type ReduxMonsterActionCreatorMakers<S, T, P> = { [ name : string ] : ReduxMonsterActionCreatorMaker<S, T, P> };
 
 declare interface ReduxMonsterConstructionOption<
-    S = {},
-    T = {},
-    Pcd = {},
-    Acm = {},
-    P = {}
+    S = any,
+    T = any,
+    Pcd = any,
+    Acm = any,
+    P = any
 >
 {
     name : string;
@@ -50,9 +50,9 @@ declare interface ReduxMonsterConstructionOption<
 
     payloadCreatorDefinitions? : Pcd extends ReduxMonsterPayloadCreatorDefinitions ? Pcd : ReduxMonsterPayloadCreatorDefinitions;
 
-    actionCreatorMakers? : Acm extends ReduxMonsterActionCreatorMakers<S, T, P> ? Acm : ReduxMonsterActionCreatorMakers<S, T, P>;
+    actionCreatorMakers? : Acm extends ReduxMonsterActionCreatorMakers<typeof initialState, T, P> ? Acm : ReduxMonsterActionCreatorMakers<typeof initialState, T, P>;
 
-    reducers? : Record<string, ReduxReducer<S>>;
+    reducers? : Record<string, ReduxReducer<typeof initialState>>;
 
     ownProperty? : P;
 
