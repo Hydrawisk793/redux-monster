@@ -23,7 +23,8 @@ ReduxMonsterRegistry.prototype.getReducerMap = function ()
 {
     return Array.from(this._monsterMap.values())
         .reduce(
-            function (acc, monster) {
+            function (acc, monster)
+            {
                 acc[monster.ownStateKey] = monster.reducer;
 
                 return acc;

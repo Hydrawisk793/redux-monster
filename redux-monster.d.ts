@@ -1,4 +1,4 @@
-import { PickExtends } from "./pick-extends";
+import { PickKeysExtends } from "../kaphein-js/ts-utils";
 import { ReduxReducer } from "./redux-reducer";
 
 declare interface ReduxMonster<S = any, T = any, A = any, R = any, P = any>
@@ -17,7 +17,7 @@ declare interface ReduxMonster<S = any, T = any, A = any, R = any, P = any>
 
     reducer : ReduxReducer<S>;
 
-    selectors? : PickExtends<R, Function>;
+    selectors? : PickKeysExtends<R, Function>;
 
     ownProperty? : P;
 }
