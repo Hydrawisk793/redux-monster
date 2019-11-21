@@ -2,7 +2,7 @@ import { ReduxMonsterRegistry } from "./redux-monster-registry";
 import { FluxStandardAction } from "./flux-standard-action";
 import { ReduxReducer } from "./redux-reducer";
 import { ReduxMonster } from "./redux-monster";
-import { PickKeysExtends } from "../kaphein-js/ts-utils";
+import { PickExtends } from "../kaphein-js/ts-utils";
 
 declare interface ReduxMonsterPayloadCreatorDefinition
 {
@@ -11,16 +11,29 @@ declare interface ReduxMonsterPayloadCreatorDefinition
     payloadCreator : (...args : any[]) => any;
 }
 
-declare type ConstructedReduxMonsterWithoutActionCreators<S, T, P> = Pick<ReduxMonster<S, PickKeysExtends<T, string>, any, any, P>, Exclude<keyof ReduxMonster<S, PickKeysExtends<T, string>, any, any, P>, "actionCreators">>;
+declare type ConstructedReduxMonsterWithoutActionCreators<S, T, P> = Pick<ReduxMonster<S, PickExtends<T, string>, any, any, P>, Exclude<keyof ReduxMonster<S, PickExtends<T, string>, any, any, P>, "actionCreators">>;
 
 declare type ReduxMonsterActionCreatorMaker<S, T, P> = (monster : ConstructedReduxMonsterWithoutActionCreators<S, T, P>) => (...args : any[]) => (FluxStandardAction | Function);
 
 declare type ConstructedReduxMonster<S, T, Pcd, Acm, P> = ReduxMonster<
     S,
-    PickKeysExtends<T, string>,
+    PickExtends<T, string>,
     (
-        { [K in keyof Pcd] : (Pcd[K] extends ReduxMonsterPayloadCreatorDefinition ? (...args : Parameters<Pcd[K]["payloadCreator"]>) => FluxStandardAction<ReturnType<Pcd[K]["payloadCreator"]>> : never) }
-        & { [K in keyof Acm] : (Acm[K] extends ReduxMonsterActionCreatorMaker<S, T, P> ? ReturnType<Acm[K]> : never) }
+        {
+            [K in keyof Pcd] : (
+                Pcd[K] extends ReduxMonsterPayloadCreatorDefinition
+                ? (...args : Parameters<Pcd[K]["payloadCreator"]>) => FluxStandardAction<ReturnType<Pcd[K]["payloadCreator"]>>
+                : never
+            )
+        }
+        & {
+            [K in keyof Acm] : (
+                Acm[K] extends ReduxMonsterActionCreatorMaker<S, T, P>
+                ?
+                ReturnType<Acm[K]>
+                : never
+            )
+        }
     ),
     {},
     P
