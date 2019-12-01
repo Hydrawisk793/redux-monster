@@ -11,44 +11,63 @@ declare interface ReduxMonsterPayloadCreatorDefinition
     payloadCreator : (...args : any[]) => any;
 }
 
-declare type ConstructedReduxMonsterWithoutActionCreators<S, T, P> = Pick<ReduxMonster<S, PickExtends<T, string>, any, any, P>, Exclude<keyof ReduxMonster<S, PickExtends<T, string>, any, any, P>, "actionCreators">>;
+declare type IncompletelyConstructedReduxMonster<S, T, P> = Pick<
+    ReduxMonster<
+        S,
+        PickExtends<T, string>,
+        {},
+        {},
+        P
+    >,
+    Exclude<keyof ReduxMonster<S, PickExtends<T, string>, {}, {}, P>, "actionCreators"|"selectors">
+>;
 
-declare type ReduxMonsterActionCreatorMaker<S, T, P> = (monster : ConstructedReduxMonsterWithoutActionCreators<S, T, P>) => (...args : any[]) => (FluxStandardAction | Function);
+declare type ReduxMonsterActionCreatorMaker<S, T, P> = (monster : IncompletelyConstructedReduxMonster<S, T, P>) => (...args : any[]) => (FluxStandardAction | Function);
 
-declare type ConstructedReduxMonster<S, T, Pcd, Acm, P> = ReduxMonster<
+declare type ReduxMonsterSelectorMaker<S, T, P> = (monster : IncompletelyConstructedReduxMonster<S, T, P>) => (rootState : any, ...args : any[]) => any;
+
+declare type ConstructedReduxMonster<S, T, P, Pcd, Acm, Sm> = ReduxMonster<
     S,
     PickExtends<T, string>,
     (
         {
-            [K in keyof Pcd] : (
+            [ K in keyof Pcd ] : (
                 Pcd[K] extends ReduxMonsterPayloadCreatorDefinition
                 ? (...args : Parameters<Pcd[K]["payloadCreator"]>) => FluxStandardAction<ReturnType<Pcd[K]["payloadCreator"]>>
                 : never
             )
         }
         & {
-            [K in keyof Acm] : (
+            [ K in keyof Acm ] : (
                 Acm[K] extends ReduxMonsterActionCreatorMaker<S, T, P>
-                ?
-                ReturnType<Acm[K]>
+                ? ReturnType<Acm[K]>
                 : never
             )
         }
     ),
-    {},
+    {
+        [ K in keyof Sm ] : (
+            Sm[K] extends ReduxMonsterSelectorMaker<S, T, P>
+            ? ReturnType<Sm[K]>
+            : never
+        )
+    },
     P
 >;
 
-declare type ReduxMonsterPayloadCreatorDefinitions = { [ name : string ] : ReduxMonsterPayloadCreatorDefinition };
+declare type ReduxMonsterPayloadCreatorDefinitions = Record<string, ReduxMonsterPayloadCreatorDefinition>;
 
-declare type ReduxMonsterActionCreatorMakers<S, T, P> = { [ name : string ] : ReduxMonsterActionCreatorMaker<S, T, P> };
+declare type ReduxMonsterActionCreatorMakers<S, T, P> = Record<string, ReduxMonsterActionCreatorMaker<S, T, P>>;
+
+declare type ReduxMonsterSelectorMakers<S, T, P> = Record<string, ReduxMonsterSelectorMaker<S, T, P>>;
 
 declare interface ReduxMonsterConstructionOption<
     S = any,
     T = any,
+    P = any,
     Pcd = any,
     Acm = any,
-    P = any
+    Sm = any,
 >
 {
     name : string;
@@ -66,6 +85,8 @@ declare interface ReduxMonsterConstructionOption<
     actionCreatorMakers? : Acm extends ReduxMonsterActionCreatorMakers<S, T, P> ? Acm : ReduxMonsterActionCreatorMakers<S, T, P>;
 
     reducers? : Record<string, ReduxReducer<S>>;
+
+    selectorMakers? : Sm extends ReduxMonsterSelectorMakers<S, T, P> ? Sm : ReduxMonsterSelectorMakers<S, T, P>;
 
     ownProperty? : P;
 

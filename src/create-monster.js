@@ -1,11 +1,3 @@
-// import { handleActions } from "redux-actions";
-
-// import { isUndefinedOrNull, isString, isCallable } from "../kaphein-js/utils/type-trait";
-// import { isParameterString, isParameterNotUndefined, isParameterNotUndefinedNorNull } from "../kaphein-js/assert/parameter";
-// import { ReduxMonsterRegistry } from "./redux-monster-registry";
-
-// import { ReduxMonsterConstructionOption, ConstructedReduxMonster } from "./redux-monster-construction-option";
-
 var handleActions = require("redux-actions").handleActions;
 
 var isUndefinedOrNull = require("../kaphein-js/utils/type-trait").isUndefinedOrNull;
@@ -19,11 +11,11 @@ var ReduxMonsterRegistry = require("./redux-monster-registry").ReduxMonsterRegis
 function defaultPayloadCreator(payload)
 {
     return payload;
-};
+}
 
 /**
- *  @template S, T, Pcd, Acm, P
- *  @param {import("./redux-monster-construction-option").ReduxMonsterConstructionOption<S, T, Pcd, Acm, P>} option
+ *  @template S, T, P, Pcd, Acm, Sm
+ *  @param {import("./redux-monster-construction-option").ReduxMonsterConstructionOption<S, T, P, Pcd, Acm, Sm>} option 
  */
 function createMonster(option)
 {
@@ -31,7 +23,7 @@ function createMonster(option)
     isParameterNotUndefined("option.initialState", option.initialState);
     isParameterNotUndefinedNorNull("option.actionTypes", option.actionTypes);
 
-    /** @type {import("./redux-monster-construction-option").ConstructedReduxMonster<S, T, Pcd, Acm, P>} */var monster;
+    /** @type {import("./redux-monster-construction-option").ConstructedReduxMonster<S, T, P, Pcd, Acm, Sm>} */var monster;
     var isRegistryPresent = option.monsterRegistry instanceof ReduxMonsterRegistry;
     if(isRegistryPresent && option.monsterRegistry.isMonsterRegistered(option.name)) {
         monster = option.monsterRegistry.getMonster(option.name);
@@ -109,26 +101,7 @@ function createMonster(option)
                 option.initialState
             ),
 
-            // selectors : (
-            //     !isUndefinedOrNull(option.selectors)
-            //     ? Object.keys(option.selectors).reduce(
-            //         function (acc, key)
-            //         {
-            //             var func = option.selectors[key];
-
-            //             if(isCallable(func)) {
-            //                 acc[key] = function (state)
-            //                 {
-            //                     return func.apply(null, [state[option.name]].concat(Array.prototype.slice.call(arguments, 1)));
-            //                 };
-            //             }
-
-            //             return acc;
-            //         },
-            //         {}
-            //     )
-            //     : {}
-            // ),
+            selectors : {},
 
             ownProperty : /** @type {P} */ (
                 ("ownProperty" in option) && !isUndefinedOrNull(option.ownProperty)
@@ -137,14 +110,30 @@ function createMonster(option)
             ),
         };
 
-        if("actionCreatorMakers" in option && !isUndefinedOrNull(option.actionCreatorMakers)) {
-            Object.keys(option.actionCreatorMakers).reduce(
-                function (acc, acmName)
+        if("selectorMakers" in option && !isUndefinedOrNull(option.selectorMakers)) {
+            Object.entries(option.selectorMakers).reduce(
+                function (acc, pair)
                 {
-                    var acm = option.actionCreatorMakers[acmName];
+                    var sm = pair[1];
+
+                    if(isCallable(sm)) {
+                        acc[pair[0]] = sm(monster);
+                    }
+
+                    return acc;
+                },
+                monster.selectors
+            );
+        }
+
+        if("actionCreatorMakers" in option && !isUndefinedOrNull(option.actionCreatorMakers)) {
+            Object.entries(option.actionCreatorMakers).reduce(
+                function (acc, pair)
+                {
+                    var acm = pair[1];
 
                     if(isCallable(acm)) {
-                        acc[acmName] = acm(monster);
+                        acc[pair[0]] = acm(monster);
                     }
 
                     return acc;
@@ -159,12 +148,8 @@ function createMonster(option)
     }
 
     return monster;
-};
+}
 
-// export {
-//     createMonster,
-// };
-
-module.exports = {
-    createMonster : createMonster,
+export {
+    createMonster,
 };
