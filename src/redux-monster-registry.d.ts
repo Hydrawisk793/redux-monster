@@ -1,3 +1,5 @@
+import { EventNotifierAddOption } from "kaphein-js";
+
 import { ReduxMonster } from "./redux-monster";
 import { ReduxReducer } from "./redux-reducer";
 
@@ -5,27 +7,41 @@ declare namespace ReduxMonsterRegistry
 {
     interface Event
     {
-        source : ReduxMonsterRegistry,
+        source : ReduxMonsterRegistry;
 
-        operation : string,
+        operation : string;
 
-        monster : ReduxMonster,
+        monster : ReduxMonster;
     }
 }
 
 declare class ReduxMonsterRegistry
 {
+    public static readonly getMonsterRegistryFunctionKey : symbol | string;
+
+    public static findMonsterRegistryFromReduxStore(
+        store : any
+    ) : ReduxMonsterRegistry;
+
     public constructor();
 
     public addEventListener(
         eventName : string,
-        listener : (e : ReduxMonsterRegistry.Event) => void
+        listener : (e : ReduxMonsterRegistry.Event) => void,
+        option? : EventNotifierAddOption
     ) : void;
 
     public removeEventListener(
         eventName : string,
         listener : (e : ReduxMonsterRegistry.Event) => void
     ) : void;
+
+    public getConnectedReduxStore() : any;
+
+    public connectReduxStore(
+        store : any,
+        registryChagedHandler? : Function
+    ) : any;
 
     public getReducerMap() : Record<string, ReduxReducer>;
 

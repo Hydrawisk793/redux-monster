@@ -2,7 +2,7 @@ import { ReduxMonsterRegistry } from "./redux-monster-registry";
 import { FluxStandardAction } from "./flux-standard-action";
 import { ReduxReducer } from "./redux-reducer";
 import { ReduxMonster } from "./redux-monster";
-import { PickExtends } from "../kaphein-js/ts-utils";
+import { PickExtends } from "kaphein-js";
 
 declare interface ReduxMonsterPayloadCreatorDefinition
 {

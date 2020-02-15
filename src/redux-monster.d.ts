@@ -1,4 +1,4 @@
-import { PickExtends } from "../kaphein-js/ts-utils";
+import { PickExtends } from "kaphein-js";
 import { ReduxReducer } from "./redux-reducer";
 
 declare interface ReduxMonster<S = any, T = any, A = any, R = any, P = any>
