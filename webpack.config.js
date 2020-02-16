@@ -15,7 +15,8 @@ module.exports = (function ()
             filename : "index.js",
             path : path.resolve(__dirname, outputDirectoryName),
             library : "reduxMonster",
-            libraryTarget : "umd"
+            libraryTarget : "umd",
+            globalObject : "this"
         },
         optimization : {
             minimizer : [new UglifyJsPlugin()]
