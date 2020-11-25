@@ -22,13 +22,15 @@ module.exports = (function ()
             minimizer : [new TerserPlugin()]
         },
         plugins : [
-            new CopyWebpackPlugin([
-                {
-                    context : "src",
-                    from : "**/*.d.ts",
-                    to : ""
-                }
-            ]),
+            new CopyWebpackPlugin({
+                patterns : [
+                    {
+                        context : "src",
+                        from : "**/*.d.ts",
+                        to : ""
+                    }
+                ]
+            }),
         ],
         module : {
 
