@@ -1,171 +1,286 @@
-var isUndefinedOrNull = require("kaphein-js").isUndefinedOrNull;
-var StringKeyMap = require("kaphein-js").StringKeyMap;
-var EventNotifier = require("kaphein-js").EventNotifier;
+var kapheinJs = require("kaphein-js");
+var isUndefinedOrNull = kapheinJs.isUndefinedOrNull;
+var isNonNullObject = kapheinJs.isNonNullObject;
+var StringKeyMap = kapheinJs.StringKeyMap;
+var EventEmitter = require("kaphein-js-event-emitter").EventEmitter;
+var combineReducers = require("redux").combineReducers;
 
 module.exports = (function ()
 {
-    var _isSymbolSupported = (Symbol && "function" !== typeof Symbol);
+    var _isSymbolSupported = ("function" === typeof Symbol);
 
     var getMonsterRegistryFunctionKey = (
         _isSymbolSupported
-        ? Symbol("ReduxMonsterRegistry.getMonsterRegistryFunctionKey")
-        : "pseudo-symbol:redux-monster:ReduxMonsterRegistry.getMonsterRegistryFunctionKey"
+            ? Symbol("redux-monster/ReduxMonsterRegistry.getMonsterRegistryFunctionKey")
+            : "pseudo-symbol:redux-monster/ReduxMonsterRegistry.getMonsterRegistryFunctionKey"
     );
 
     /**
-     *  @constructor
+     *  @typedef {import("redux").Store} Store
      */
-    function ReduxMonsterRegistry()
+    /**
+     *  @typedef {import("./redux-monster").ReduxMonster} AnyReduxMonster
+     *  @typedef {import("./redux-monster").ReduxReducer} AnyReduxReducer
+     *  @typedef {import("./redux-monster-registry").ReduxMonsterRegistryEventListenerMap} ReduxMonsterRegistryEventListenerMap
+     */
+
+    /**
+     *  @typedef {{
+            name : string;
+            normalized : AnyReduxMonster;
+        }} Registration
+     */
+
+    /**
+     *  @constructor
+     *  @param {Store} reduxStore
+     */
+    function ReduxMonsterRegistry(reduxStore)
     {
-        /** @type {Map<string, import("./redux-monster").ReduxMonster>} */this._monsterMap = new StringKeyMap();
+        if(isUndefinedOrNull(reduxStore))
+        {
+            throw new TypeError("'reduxStore' must satisfy \"redux\".Store interface.");
+        }
 
-        this._eventNotifier = new EventNotifier();
+        /** @type {EventEmitter<ReduxMonsterRegistryEventListenerMap>} */this._evtEmt = new EventEmitter({
+            xBindThis : false,
+            xEmitNewListenerEvent : false,
+            xEmitRemoveListenerEvent : false,
+            xPreventDuplicateListeners : true,
+            xRemoveFirstFoundOne : true
+        });
+        this._registrations = new StringKeyMap(/** @type {Iterable<[string, Registration]>} */(null));
+        /** @type {Store} */this._reduxStore = null;
 
-        this._reduxStore = null;
-
-        this._registryChangedHandler = null;
+        _setReduxStore(this, reduxStore);
     }
-
-    ReduxMonsterRegistry.getMonsterRegistryFunctionKey = getMonsterRegistryFunctionKey;
-
-    ReduxMonsterRegistry.findMonsterRegistryFromReduxStore = function findMonsterRegistryFromReduxStore(store)
-    {
-        return (
-            (!isUndefinedOrNull(store) && (getMonsterRegistryFunctionKey in store))
-            ? store[getMonsterRegistryFunctionKey]()
-            : null
-        );
-    };
 
     ReduxMonsterRegistry.prototype = {
         constructor : ReduxMonsterRegistry,
 
-        addEventListener : function addEventListener(eventName, listener)
+        addListener : function addListener(eventName, listener)
         {
-            this._eventNotifier.add(eventName, listener, arguments[2]);
+            this._evtEmt.addListener(eventName, listener);
+
+            return this;
         },
 
-        removeEventListener : function removeEventListener(eventName, listener)
+        removeListener : function removeListener(eventName, listener)
         {
-            this._eventNotifier.remove(eventName, listener);
+            this._evtEmt.removeListener(eventName, listener);
+
+            return this;
         },
 
-        getConnectedReduxStore : function getConnectedReduxStorefunction()
+        on : function on(eventName, listener)
         {
-            return this._reduxStore;
+            this._evtEmt.on(eventName, listener);
+
+            return this;
         },
 
-        connectReduxStore : function connectReduxStorefunction(store)
+        once : function once(eventName, listener)
         {
-            var prevReduxStore = this._reduxStore;
-            if(prevReduxStore !== store) {
-                if(null !== prevReduxStore) {
-                    if(null !== this._registryChangedHandler) {
-                        this.removeEventListener("registryChanged", this._registryChangedHandler);
-                        this._registryChangedHandler = null;
-                    }
+            this._evtEmt.once(eventName, listener);
 
-                    if(getMonsterRegistryFunctionKey in prevReduxStore) {
-                        delete prevReduxStore[getMonsterRegistryFunctionKey];
-                    }
-                }
-
-                this._reduxStore = store;
-                if(null !== store) {
-                    var registryChagedHandler = arguments[1];
-                    if("function" === typeof registryChagedHandler) {
-                        this._registryChangedHandler = registryChagedHandler.bind(this);
-                        this.addEventListener("registryChanged", this._registryChangedHandler);
-                    }
-
-                    var thisRef = this;
-                    store[getMonsterRegistryFunctionKey] = function ()
-                    {
-                        return thisRef;
-                    };
-                }
-            }
-
-            return prevReduxStore;
+            return this;
         },
 
-        getReducerMap : function getReducerMap()
+        off : function off(eventName, listener)
         {
-            return Array.from(this._monsterMap.values())
-                .reduce(
-                    function (acc, monster)
-                    {
-                        acc[monster.ownStateKey] = monster.reducer;
+            this._evtEmt.off(eventName, listener);
 
-                        return acc;
-                    },
-                    {}
-                )
-            ;
+            return this;
         },
 
-        isMonsterRegistered : function isMonsterRegistered(name)
+        getMonsterNames : function getMonsterNames()
         {
-            return this._monsterMap.has(name);
+            return this._registrations.map(function (registration)
+            {
+                return registration.name;
+            });
         },
 
         getMonster : function getMonster(name)
         {
-            return (
-                this.isMonsterRegistered(name)
-                ? this._monsterMap["get"](name)
-                : null
-            );
+            var registration = this._registrations.get(name);
+
+            return (registration ? registration.normalized : null);
         },
 
-        registerMonster : function registerMonster(monster, replaceExistingOne)
+        /**
+         *  @param {AnyReduxMonster} monster
+         */
+        registerMonster : function registerMonster(monster)
         {
-            var oldMonster = this.getMonster(monster.name);
+            var replaceExistingOne = !!arguments[1];
 
-            if(
-                replaceExistingOne
-                || (null === oldMonster && oldMonster !== monster)
-            ) {
-                this._monsterMap["set"](monster.name, monster);
+            var monsterName = monster.name;
+            var registration = this._registrations.get(monsterName) || null;
+            if(registration)
+            {
+                if(replaceExistingOne)
+                {
+                    this.unregisterMonster(monsterName);
+                }
+                else if(registration.normalized !== monster)
+                {
+                    throw new Error("'" + monsterName + "' is already registered.");
+                }
+            }
+            else
+            {
+                this._registrations.set(monsterName, {
+                    name : monsterName,
+                    normalized : monster
+                });
 
-                this._eventNotifier.notify(
-                    "registryChanged",
+                _replaceReducer(this);
+
+                this._evtEmt.emit(
+                    "monsterRegistered",
                     {
                         source : this,
-                        operation : "register",
                         monster : monster
                     }
                 );
             }
-            // else {
-            //     console.log("'" + monster.name + "' has already been registed.");
-            // }
-
-            return oldMonster;
         },
 
         unregisterMonster : function unregisterMonster(name)
         {
-            var isReducerExists = this.isMonsterRegistered(name);
-            var monster = null;
+            var monster = this.getMonster(name);
+            if(monster)
+            {
+                this._registrations["delete"](name);
 
-            if(isReducerExists) {
-                monster = this._monsterMap["get"](name);
+                _replaceReducer(this);
 
-                this._monsterMap["delete"](name);
-
-                this._eventNotifier.notify(
-                    "registryChanged",
+                this._evtEmt.emit(
+                    "monsterUnregistered",
                     {
                         source : this,
-                        operation : "unregister",
                         monster : monster
                     }
                 );
             }
-
-            return monster;
         }
+    }
+
+    ReduxMonsterRegistry.findFromReduxStore = function findFromReduxStore(store)
+    {
+        return (
+            (!isUndefinedOrNull(store) && (getMonsterRegistryFunctionKey in store))
+                ? store[getMonsterRegistryFunctionKey]()
+                : null
+        );
+    };
+
+    /**
+     *  @param {ReduxMonsterRegistry} thisRef
+     *  @param {Store | null} reduxStore
+     *  @param {Record<string, any> | null} [initialState]
+     */
+    function _setReduxStore(thisRef, reduxStore)
+    {
+        var initialState = arguments[2];
+        var oldReduxStore = thisRef._reduxStore;
+
+        if(!isNonNullObject(reduxStore))
+        {
+            thisRef._reduxStore = null;
+
+            if(oldReduxStore)
+            {
+                delete oldReduxStore[getMonsterRegistryFunctionKey];
+            }
+        }
+        else
+        {
+            if(oldReduxStore !== reduxStore)
+            {
+                _setReduxStore(thisRef);
+
+                thisRef._reduxStore = reduxStore;
+
+                var getMonsterRegistry = function getMonsterRegistry()
+                {
+                    return thisRef;
+                };
+                reduxStore[getMonsterRegistryFunctionKey] = getMonsterRegistry;
+                reduxStore.getMonsterRegistry = getMonsterRegistry;
+
+                _replaceReducer(thisRef, initialState);
+            }
+        }
+    }
+
+    /**
+     *  @param {ReduxMonsterRegistry} thisRef
+     */
+    function _getReducerMap(thisRef)
+    {
+        return Array.from(thisRef._registrations.values())
+            .reduce(
+                function (acc, registration)
+                {
+                    var normalized = registration.normalized;
+                    acc[normalized.ownStateKey] = normalized.reducer;
+
+                    return acc;
+                },
+                {}
+            )
+        ;
+    }
+
+    /**
+     *  @param {ReduxMonsterRegistry} thisRef
+     *  @param {Record<string, any> | null} [initialState]
+     */
+    function _replaceReducer(thisRef)
+    {
+        var initialState = arguments[1];
+        var reduxStore = thisRef._reduxStore;
+        if(reduxStore)
+        {
+            reduxStore.replaceReducer(_combineReducers(_getReducerMap(thisRef), initialState));
+        }
+    }
+
+    /**
+     *  @param {Record<string, AnyReduxReducer>} reducerMap
+     *  @param {Record<string, any> | null} [initialState]
+     */
+    function _combineReducers(reducerMap)
+    {
+        var initialState = arguments[1] || null;
+        var finalReducerMap = Object.assign({}, reducerMap);
+        if(initialState)
+        {
+            Object
+                .keys(initialState)
+                .forEach(function (key)
+                {
+                    if(!(key in reducerMap))
+                    {
+                        finalReducerMap[key] = function (state)
+                        {
+                            return ("undefined" === typeof state ? null : state);
+                        };
+                    }
+                })
+            ;
+        }
+
+        return (
+            Object.keys(finalReducerMap).length > 0
+                ? combineReducers(finalReducerMap)
+                : function (state)
+                {
+                    return ("undefined" === typeof state ? initialState : state);
+                }
+        );
     }
 
     return {

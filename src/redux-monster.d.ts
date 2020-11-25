@@ -1,27 +1,54 @@
-import { PickExtends } from "kaphein-js";
-import { ReduxReducer } from "./redux-reducer";
+import { PickExtends } from "./ts-utils";
+import { FluxStandardAction } from "./flux-standard-action";
 
-declare interface ReduxMonster<S = any, T = any, A = any, R = any, P = any>
+export declare interface ReduxMonster<
+    OwnState = any,
+    Reducers = Record<string, ReduxReducer<OwnState>>,
+    ActionCreators = Record<string, ActionCreator>,
+    Selectors = Record<string, ReduxSelector<OwnState>>
+>
 {
     name : string;
 
     ownStateKey : string;
 
-    initialState : S;
+    initialState : OwnState;
 
-    actionTypePrefix : string;
+    actionTypes : {
+        [ K in keyof PickExtends<
+            Reducers,
+            ReduxReducer<OwnState>
+        > ] : K;
+    };
 
-    actionTypes : T;
+    reducer : ReduxReducer<OwnState>;
 
-    actionCreators : A;
+    reducers : PickExtends<
+        Reducers,
+        ReduxReducer<OwnState>
+    >;
 
-    reducer : ReduxReducer<S>;
+    actionCreators : PickExtends<
+        ActionCreators,
+        ActionCreator
+    >;
 
-    selectors? : PickExtends<R, (state : any, ...args : any[]) => any>;
-
-    ownProperty? : P;
+    selectors : PickExtends<
+        Selectors,
+        ReduxSelector
+    >;
 }
 
-export {
-    ReduxMonster,
-};
+export declare type ReduxReducer<S = any, P = any, R = S> = (
+    state : S,
+    action : FluxStandardAction<P>
+) => R;
+
+export declare type ActionCreator = (
+    ...args : any[]
+) => any;
+
+export declare type ReduxSelector<State = any> = (
+    state : State,
+    ...args : any[]
+) => any;
