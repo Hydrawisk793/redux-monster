@@ -30,6 +30,7 @@
     "@typescript-eslint/parser": "^2.19.2",
     "copy-webpack-plugin": "^5.1.1",
     "eslint": "^6.8.0",
+    "husky": "^2.7.0",
     "terser-webpack-plugin": "^2.3.5",
     "typescript": "^3.7.5",
     "webpack": "^4.41.6",
