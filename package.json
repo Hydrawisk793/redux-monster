@@ -38,7 +38,7 @@
     "webpack-node-externals": "^2.5.2"
   },
   "dependencies": {
-    "kaphein-js": "^0.3.2",
+    "kaphein-js": "~0.14.2",
     "redux-actions": "^2.6.5"
   }
 }
