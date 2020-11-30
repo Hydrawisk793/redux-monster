@@ -41,7 +41,6 @@
   "dependencies": {
     "kaphein-js": "~0.14.2",
     "kaphein-js-event-emitter": "~0.1.2",
-    "redux": "^4.0.5",
-    "redux-actions": "^2.6.5"
+    "redux": "^4.0.5"
   }
 }
