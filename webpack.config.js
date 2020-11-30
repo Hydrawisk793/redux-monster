@@ -2,7 +2,7 @@ var path = require("path");
 
 var CopyWebpackPlugin = require("copy-webpack-plugin");
 var TerserPlugin = require("terser-webpack-plugin");
-var nodeExternals = require('webpack-node-externals');
+var nodeExternals = require("webpack-node-externals");
 
 module.exports = (function ()
 {
