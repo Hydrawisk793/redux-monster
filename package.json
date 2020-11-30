@@ -10,6 +10,7 @@
   ],
   "scripts": {
     "lint": "eslint src && eslint src -c src/.eslintrc.ts.json --ext '.d.ts'",
+    "lint:fix": "npm run lint -- --fix",
     "build": "rm -rf dist && npm run lint && webpack --mode production --config webpack.config.js",
     "prepack": "npm install && npm run build"
   },
