@@ -1,4 +1,5 @@
 var kapheinJs = require("kaphein-js");
+var isFunction = kapheinJs.isFunction;
 var isUndefinedOrNull = kapheinJs.isUndefinedOrNull;
 var isNonNullObject = kapheinJs.isNonNullObject;
 var StringKeyMap = kapheinJs.StringKeyMap;
@@ -7,14 +8,6 @@ var combineReducers = require("redux").combineReducers;
 
 module.exports = (function ()
 {
-    var _isSymbolSupported = ("function" === typeof Symbol);
-
-    var getMonsterRegistryFunctionKey = (
-        _isSymbolSupported
-            ? Symbol("redux-monster/ReduxMonsterRegistry.getMonsterRegistryFunctionKey")
-            : "pseudo-symbol:redux-monster/ReduxMonsterRegistry.getMonsterRegistryFunctionKey"
-    );
-
     /**
      *  @typedef {import("redux").Store} Store
      */
@@ -170,8 +163,12 @@ module.exports = (function ()
     ReduxMonsterRegistry.findFromReduxStore = function findFromReduxStore(store)
     {
         return (
-            (!isUndefinedOrNull(store) && (getMonsterRegistryFunctionKey in store))
-                ? store[getMonsterRegistryFunctionKey]()
+            (
+                !isUndefinedOrNull(store)
+                && ("getMonsterRegistry" in store)
+                && isFunction(store.getMonsterRegistry)
+            )
+                ? store.getMonsterRegistry()
                 : null
         );
     };
@@ -192,7 +189,7 @@ module.exports = (function ()
 
             if(oldReduxStore)
             {
-                delete oldReduxStore[getMonsterRegistryFunctionKey];
+                delete oldReduxStore.getMonsterRegistry;
             }
         }
         else
@@ -203,12 +200,10 @@ module.exports = (function ()
 
                 thisRef._reduxStore = reduxStore;
 
-                var getMonsterRegistry = function getMonsterRegistry()
+                reduxStore.getMonsterRegistry = function getMonsterRegistry()
                 {
                     return thisRef;
                 };
-                reduxStore[getMonsterRegistryFunctionKey] = getMonsterRegistry;
-                reduxStore.getMonsterRegistry = getMonsterRegistry;
 
                 _replaceReducer(thisRef, initialState);
             }
