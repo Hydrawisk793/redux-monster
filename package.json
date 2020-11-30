@@ -1,46 +1,46 @@
 {
-  "name": "redux-monster",
-  "version": "0.1.3",
-  "description": "A proposal for modularization ecosystem of redux component packages.",
-  "main": "dist/index.js",
-  "module": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "files": [
-    "dist"
-  ],
-  "scripts": {
-    "lint": "eslint src && eslint src -c src/.eslintrc.ts.json --ext '.d.ts'",
-    "build": "rm -rf dist && npm run lint && webpack --mode production --config webpack.config.js",
-    "prepack": "npm install && npm run build"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Hydrawisk793/redux-monster.git"
-  },
-  "bundleDependencies": [],
-  "keywords": [],
-  "author": "Hydrawisk793 <hyw793@gmail.com>",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/Hydrawisk793/redux-monster/issues"
-  },
-  "homepage": "https://github.com/Hydrawisk793/redux-monster#readme",
-  "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^2.19.2",
-    "@typescript-eslint/parser": "^2.19.2",
-    "copy-webpack-plugin": "^6.3.2",
-    "eslint": "^6.8.0",
-    "husky": "^2.7.0",
-    "terser-webpack-plugin": "^2.3.8",
-    "typescript": "^4.1.2",
-    "webpack": "^4.44.2",
-    "webpack-cli": "^3.3.12",
-    "webpack-node-externals": "^2.5.2"
-  },
-  "dependencies": {
-    "kaphein-js": "~0.14.2",
-    "kaphein-js-event-emitter": "~0.1.2",
-    "redux": "^4.0.5",
-    "redux-actions": "^2.6.5"
-  }
+    "name": "redux-monster",
+    "version": "0.2.0",
+    "description": "A proposal for modularization ecosystem of redux component packages.",
+    "main": "dist/index.js",
+    "module": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "files": [
+        "dist"
+    ],
+    "scripts": {
+        "lint": "tsc --project tsconfig.dts.json && eslint src/**/*.js",
+        "lint:fix": "npm run lint -- --fix",
+        "build": "rm -rf dist && npm run lint && webpack --mode production --config webpack.config.js",
+        "prepack": "npm install && npm run build"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Hydrawisk793/redux-monster.git"
+    },
+    "bundleDependencies": [],
+    "keywords": [],
+    "author": "Hydrawisk793 <hyw793@gmail.com>",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/Hydrawisk793/redux-monster/issues"
+    },
+    "homepage": "https://github.com/Hydrawisk793/redux-monster#readme",
+    "dependencies": {
+        "kaphein-js": "~0.14.2",
+        "kaphein-js-event-emitter": "~0.1.2",
+        "redux": "^4.0.5"
+    },
+    "devDependencies": {
+        "@typescript-eslint/eslint-plugin": "^2.19.2",
+        "@typescript-eslint/parser": "^2.19.2",
+        "copy-webpack-plugin": "^6.3.2",
+        "eslint": "^6.8.0",
+        "husky": "^2.7.0",
+        "terser-webpack-plugin": "^2.3.8",
+        "typescript": "^4.1.2",
+        "webpack": "^4.44.2",
+        "webpack-cli": "^3.3.12",
+        "webpack-node-externals": "^2.5.2"
+    }
 }

@@ -1,68 +1,74 @@
-import { EventNotifierAddOption } from "kaphein-js";
+import { EventListenable } from "kaphein-js-event-emitter";
+import { Store } from "redux";
 
 import { ReduxMonster } from "./redux-monster";
-import { ReduxReducer } from "./redux-reducer";
 
-declare namespace ReduxMonsterRegistry
+export declare class ReduxMonsterRegistry implements EventListenable<ReduxMonsterRegistryEventListenerMap>
 {
-    interface Event
-    {
-        source : ReduxMonsterRegistry;
+    public static findFromReduxStore(
+        reduxStore : Store
+    ) : ReduxMonsterRegistry | null;
 
-        operation : string;
+    public constructor(
+        reduxStore : Store
+    );
 
-        monster : ReduxMonster;
-    }
-}
+    public addListener<K extends keyof ReduxMonsterRegistryEventListenerMap>(
+        eventName : K,
+        listener : ReduxMonsterRegistryEventListenerMap[K]
+    ) : this;
 
-declare class ReduxMonsterRegistry
-{
-    public static readonly getMonsterRegistryFunctionKey : symbol | string;
+    public removeListener<K extends keyof ReduxMonsterRegistryEventListenerMap>(
+        eventName : K,
+        listener : ReduxMonsterRegistryEventListenerMap[K]
+    ) : this;
 
-    public static findMonsterRegistryFromReduxStore(
-        store : any
-    ) : ReduxMonsterRegistry;
+    public on<K extends keyof ReduxMonsterRegistryEventListenerMap>(
+        eventName : K,
+        listener : ReduxMonsterRegistryEventListenerMap[K]
+    ) : this;
 
-    public constructor();
+    public once<K extends keyof ReduxMonsterRegistryEventListenerMap>(
+        eventName : K,
+        listener : ReduxMonsterRegistryEventListenerMap[K]
+    ) : this;
 
-    public addEventListener(
-        eventName : string,
-        listener : (e : ReduxMonsterRegistry.Event) => void,
-        option? : EventNotifierAddOption
-    ) : void;
+    public off<K extends keyof ReduxMonsterRegistryEventListenerMap>(
+        eventName : K,
+        listener : ReduxMonsterRegistryEventListenerMap[K]
+    ) : this;
 
-    public removeEventListener(
-        eventName : string,
-        listener : (e : ReduxMonsterRegistry.Event) => void
-    ) : void;
+    public getMonsterNames() : string[];
 
-    public getConnectedReduxStore() : any;
-
-    public connectReduxStore(
-        store : any,
-        registryChagedHandler? : Function
-    ) : any;
-
-    public getReducerMap() : Record<string, ReduxReducer>;
-
-    public isMonsterRegistered(
+    public getMonster(
         name : string
-    ) : boolean;
-
-    public getMonster<S, T, A, R, P>(
-        name : string
-    ) : ReduxMonster<S, T, A, R, P>;
+    ) : ReduxMonster | null;
 
     public registerMonster(
-        reduxModule : ReduxMonster,
+        monster : ReduxMonster,
         replaceExistingOne? : boolean
-    ) : ReduxMonster;
+    ) : void;
 
     public unregisterMonster(
         name : string,
-    ) : ReduxMonster;
+    ) : void;
 }
 
-export {
-    ReduxMonsterRegistry,
+export declare interface ReduxMonsterRegistryEventMap
+{
+    "monsterRegistered" : {
+        source : ReduxMonsterRegistry;
+
+        monster : ReduxMonster;
+    };
+
+    "monsterUnregistered" : {
+        source : ReduxMonsterRegistry;
+
+        monster : ReduxMonster;
+    };
+}
+
+export declare type ReduxMonsterRegistryEventListenerMap = {
+    [K in keyof ReduxMonsterRegistryEventMap] : (e : ReduxMonsterRegistryEventMap[K]) => void
 };

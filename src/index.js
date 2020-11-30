@@ -1,7 +1,10 @@
-var ReduxMonsterRegistry = require("./redux-monster-registry").ReduxMonsterRegistry;
-var createMonster = require("./create-monster").createMonster;
+var createMonster = require("./create-monster");
+var reduxMonsterRegistry = require("./redux-monster-registry");
+var createReduxMonsterEnhancer = require("./create-redux-monster-enhancer");
 
-module.exports = {
-    ReduxMonsterRegistry : ReduxMonsterRegistry,
-    createMonster : createMonster
-};
+module.exports = Object.assign(
+    {},
+    createMonster,
+    reduxMonsterRegistry,
+    createReduxMonsterEnhancer
+);

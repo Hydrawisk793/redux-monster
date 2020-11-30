@@ -1,10 +1,6 @@
 import { FluxStandardAction } from "./flux-standard-action";
 
-declare type ReduxReducer<S = any, P = any> = (
+export declare type ReduxReducer<S = any, P = any, R = S> = (
     state : S,
     action : FluxStandardAction<P>
-) => S;
-
-export {
-    ReduxReducer,
-};
+) => R;

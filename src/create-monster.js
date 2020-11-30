@@ -1,158 +1,159 @@
-var handleActions = require("redux-actions").handleActions;
-
-var isUndefinedOrNull = require("kaphein-js").isUndefinedOrNull;
-var isString = require("kaphein-js").isString;
-var isCallable = require("kaphein-js").isCallable;
-var ReduxMonsterRegistry = require("./redux-monster-registry").ReduxMonsterRegistry;
+var kapheinJs = require("kaphein-js");
+var StringKeyMap = kapheinJs.StringKeyMap;
 
 module.exports = (function ()
 {
-    function defaultPayloadCreator(payload)
+    var _slice = Array.prototype.slice;
+
+    /**
+     *  @template O, R, A, S
+     *  @typedef {import("./create-monster").MonsterCreatorParam} MonsterCreatorParam
+     */
+    /**
+     *  @template O, R, A, S
+     *  @typedef {import("./redux-monster").ReduxMonster} ReduxMonster
+     */
+    /**
+     *  @typedef {import("./redux-monster").ReduxReducer} AnyReduxReducer
+     */
+
+    /**
+     *  @template O, R, A, S
+     *  @param {MonsterCreatorParam<O, R, A, S>} param
+     */
+    function createMonster(param)
     {
-        return payload;
+        var context = param.context;
+
+        /**
+         *  @type {ReduxMonster<O, R, A, S>}
+         */
+        var monster = {
+            name : param.name,
+            ownStateKey : (param.ownStateKey || param.name),
+            initialState : (
+                "undefined" === typeof param.initialState
+                    ? null
+                    : param.initialState
+            ),
+            actionTypes : null,
+            reducer : null,
+            reducers : (
+                new StringKeyMap(Object
+                    .entries(param.reducerFactories || {})
+                    .map(function (pair)
+                    {
+                        var funcGen = pair[1];
+                        var func = ("function" === typeof funcGen ? funcGen(context) : null);
+
+                        return (
+                            "function" === typeof func
+                                ? [pair[0], func]
+                                : null
+                        );
+                    })
+                    .filter(function (pair)
+                    {
+                        return !!pair;
+                    })
+                ).toRecord()
+            ),
+            actionCreators : (
+                new StringKeyMap(Object
+                    .entries(param.actionCreatorFactories || {})
+                    .map(function (pair)
+                    {
+                        var funcGen = pair[1];
+                        var func = ("function" === typeof funcGen ? funcGen(context) : null);
+
+                        return (
+                            "function" === typeof func
+                                ? [pair[0], func]
+                                : null
+                        );
+                    })
+                    .filter(function (pair)
+                    {
+                        return !!pair;
+                    })
+                ).toRecord()
+            ),
+            selectors : null
+        };
+
+        monster.actionTypes = Object.keys(monster.reducers).reduce(function (acc, key)
+        {
+            acc[key] = key;
+
+            return acc;
+        }, {});
+
+        monster.reducer = _composeReducers(monster.reducers, param.initialState);
+
+        monster.selectors = (
+            new StringKeyMap(Object
+                .entries(param.selectorFactories || {})
+                .map(function (pair)
+                {
+                    var selFact = pair[1];
+                    var sel = ("function" === typeof selFact ? selFact(context) : null);
+                    var finalSel = (
+                        "function" === typeof sel
+                            ? function (state)
+                            {
+                                return sel.apply(void 0, [state[monster.ownStateKey]].concat(_slice.call(arguments, 1)));
+                            }
+                            : null
+                    );
+
+                    return (
+                        "function" === typeof finalSel
+                            ? [pair[0], finalSel]
+                            : null
+                    );
+                })
+                .filter(function (pair)
+                {
+                    return !!pair;
+                })
+            ).toRecord()
+        );
+
+        return monster;
     }
 
     /**
-     *  @template S, T, P, Pcd, Acm, Sm
-     *  @param {import("./redux-monster-construction-option").ReduxMonsterConstructionOption<S, T, P, Pcd, Acm, Sm>} option 
+     *  @param {Record<string, AnyReduxReducer>} reducerMap
      */
-    function createMonster(option)
+    function _composeReducers(reducerMap)
     {
-        if(!isString(option.name)) {
-            throw new TypeError("'option.name' must be a string.");
-        }
-        if(isUndefinedOrNull(option.initialState)) {
-            throw new TypeError("'option.initialState' must be provided.");
-        }
-        if(isUndefinedOrNull(option.actionTypes)) {
-            throw new TypeError("'option.actionTypes' must be provided.");
+        var initialState = arguments[1];
+        if("undefined" === typeof initialState)
+        {
+            initialState = null;
         }
 
-        /** @type {import("./redux-monster-construction-option").ConstructedReduxMonster<S, T, P, Pcd, Acm, Sm>} */var monster;
-        var isRegistryPresent = option.monsterRegistry instanceof ReduxMonsterRegistry;
-        if(isRegistryPresent && option.monsterRegistry.isMonsterRegistered(option.name)) {
-            monster = option.monsterRegistry.getMonster(option.name);
-        }
-        else {
-            var actionTypePrefix = option.name + '/';
-            var actionTypes = /** @type {typeof monster["actionTypes"]} */ Object.keys(option.actionTypes).reduce(
-                function (acc, actionTypeName)
-                {
-                    if(isString(option.actionTypes[actionTypeName])) {
-                        acc[actionTypeName] = actionTypePrefix + actionTypeName;
-                    }
+        return function (state, action)
+        {
+            var nextState = state;
 
-                    return acc;
-                },
-                {}
-            );
-
-            monster = {
-                name : option.name,
-
-                ownStateKey : ("ownStateKey" in option && isString(option.ownStateKey) ? option.ownStateKey : option.name),
-
-                initialState : option.initialState,
-
-                actionTypePrefix : actionTypePrefix,
-
-                actionTypes : actionTypes,
-
-                actionCreators : /** @type {typeof monster["actionCreators"]} */ (
-                    "payloadCreatorDefinitions" in option && !isUndefinedOrNull(option.payloadCreatorDefinitions)
-                    ? Object.keys(option.payloadCreatorDefinitions).reduce(
-                        function (acc, pcName)
-                        {
-                            var def = option.payloadCreatorDefinitions[pcName];
-
-                            if(isString(def.type)) {
-                                var prefixedActionType = actionTypePrefix + def.type;
-                                var payloadCreator = (
-                                    ("payloadCreator" in def && isCallable(def.payloadCreator))
-                                    ? def.payloadCreator
-                                    : defaultPayloadCreator
-                                );
-
-                                acc[pcName] = function ()
-                                {
-                                    return {
-                                        type : prefixedActionType,
-                                        payload : payloadCreator.apply(null, arguments)
-                                    }
-                                };
-                            }
-
-                            return acc;
-                        },
-                        {}
-                    )
-                    : {}
-                ),
-
-                reducer : handleActions(
-                    Object.keys(option.reducers).reduce(
-                        function (acc, actionType)
-                        {
-                            var reducer = option.reducers[actionType];
-
-                            if(isCallable(reducer)) {
-                                acc[actionTypePrefix + actionType] = reducer;
-                            }
-
-                            return acc;
-                        },
-                        {}
-                    ),
-                    option.initialState
-                ),
-
-                selectors : {},
-
-                ownProperty : /** @type {P} */ (
-                    ("ownProperty" in option) && !isUndefinedOrNull(option.ownProperty)
-                    ? option.ownProperty
-                    : {}
-                )
+            var type = action.type;
+            if(
+                "string" === typeof type
+                && type in reducerMap
+                && "function" === typeof reducerMap[type]
+            )
+            {
+                nextState = reducerMap[type](state, action);
             }
 
-            if("selectorMakers" in option && !isUndefinedOrNull(option.selectorMakers)) {
-                Object.entries(option.selectorMakers).reduce(
-                    function (acc, pair)
-                    {
-                        var sm = pair[1];
-
-                        if(isCallable(sm)) {
-                            acc[pair[0]] = sm(monster);
-                        }
-
-                        return acc;
-                    },
-                    monster.selectors
-                );
+            if("undefined" === typeof nextState)
+            {
+                nextState = initialState;
             }
 
-            if("actionCreatorMakers" in option && !isUndefinedOrNull(option.actionCreatorMakers)) {
-                Object.entries(option.actionCreatorMakers).reduce(
-                    function (acc, pair)
-                    {
-                        var acm = pair[1];
-
-                        if(isCallable(acm)) {
-                            acc[pair[0]] = acm(monster);
-                        }
-
-                        return acc;
-                    },
-                    monster.actionCreators
-                );
-            }
-
-            if(isRegistryPresent) {
-                option.monsterRegistry.registerMonster(monster);
-            }
-        }
-
-        return monster;
+            return nextState;
+        };
     }
 
     return {

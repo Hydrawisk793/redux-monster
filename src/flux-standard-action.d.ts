@@ -1,6 +1,6 @@
-declare interface FluxStandardAction<P = any, M = any, T extends string = string>
+export declare interface FluxStandardAction<P = any, M = any>
 {
-    type : T;
+    type : string;
 
     payload? : P;
 
@@ -8,7 +8,3 @@ declare interface FluxStandardAction<P = any, M = any, T extends string = string
 
     meta? : M;
 }
-
-export {
-    FluxStandardAction,
-};
