@@ -1,6 +1,6 @@
 {
     "name": "redux-monster",
-    "version": "0.2.1",
+    "version": "0.2.2",
     "description": "A proposal for modularization ecosystem of redux component packages.",
     "main": "dist/index.js",
     "module": "dist/index.js",
