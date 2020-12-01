@@ -4,7 +4,7 @@ import { FluxStandardAction } from "./flux-standard-action";
 export declare interface ReduxMonster<
     OwnState = any,
     Reducers = Record<string, ReduxReducer<OwnState>>,
-    ActionCreators = Record<string, ActionCreator>,
+    ActionCreators = Record<string, ReduxActionCreator>,
     Selectors = Record<string, ReduxSelector<OwnState>>
 >
 {
@@ -30,25 +30,38 @@ export declare interface ReduxMonster<
 
     actionCreators : PickExtends<
         ActionCreators,
-        ActionCreator
+        ReduxActionCreator
     >;
 
     selectors : PickExtends<
         Selectors,
-        ReduxSelector
+        ReduxSelector<OwnState>
     >;
 }
 
-export declare type ReduxReducer<S = any, P = any, R = S> = (
+export declare type ReduxReducer<
+    S = any,
+    P = any,
+    R = S
+> = (
     state : S,
     action : FluxStandardAction<P>
 ) => R;
 
+export declare type ReduxActionCreator = (
+    ...args : any[]
+) => any;
+
+/**
+ *  @deprecated Use 'ReduxActionCreator' type instead.
+ */
 export declare type ActionCreator = (
     ...args : any[]
 ) => any;
 
-export declare type ReduxSelector<State = any> = (
+export declare type ReduxSelector<
+    State = any
+> = (
     state : State,
     ...args : any[]
 ) => any;

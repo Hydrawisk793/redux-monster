@@ -1,5 +1,5 @@
 import { PickExtends, PickReturnTypes } from "./ts-utils";
-import { ReduxReducer, ActionCreator, ReduxSelector, ReduxMonster } from "./redux-monster";
+import { ReduxReducer, ReduxActionCreator, ReduxSelector, ReduxMonster } from "./redux-monster";
 
 export declare interface createMonster<
     Context = any,
@@ -104,7 +104,7 @@ export declare type ActionCreatorFactory<
     Context = any
 > = (
     context : Context
-) => ActionCreator;
+) => ReduxActionCreator;
 
 export declare type SelectorFactory<
     OwnState = any,
