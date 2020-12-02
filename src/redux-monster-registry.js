@@ -15,6 +15,8 @@ module.exports = (function ()
      *  @typedef {import("./redux-monster").ReduxMonster} AnyReduxMonster
      *  @typedef {import("./redux-monster").ReduxReducer} AnyReduxReducer
      *  @typedef {import("./redux-monster-registry").ReduxMonsterRegistryEventListenerMap} ReduxMonsterRegistryEventListenerMap
+     *  @typedef {import("./redux-monster-registry").ReduxMonsterRegistryOption} ReduxMonsterRegistryOption
+     *  @typedef {import("./redux-monster-registry").ReduxReducerEnhancer} AnyReduxReducerEnhancer
      */
 
     /**
@@ -27,9 +29,12 @@ module.exports = (function ()
     /**
      *  @constructor
      *  @param {Store} reduxStore
+     *  @param {ReduxMonsterRegistryOption | null} [option]
      */
     function ReduxMonsterRegistry(reduxStore)
     {
+        /** @type {ReduxMonsterRegistryOption | null} */var option = Object.assign({}, arguments[1]);
+
         if(isUndefinedOrNull(reduxStore))
         {
             throw new TypeError("'reduxStore' must satisfy \"redux\".Store interface.");
@@ -44,6 +49,9 @@ module.exports = (function ()
         });
         this._registrations = new StringKeyMap(/** @type {Iterable<[string, Registration]>} */(null));
         /** @type {Store} */this._reduxStore = null;
+        /** @type {AnyReduxReducerEnhancer} */this._reducerEnhancer = null;
+
+        this.setReducerEnhancer(option.reducerEnhancer || null);
 
         _setReduxStore(this, reduxStore);
     }
@@ -157,6 +165,19 @@ module.exports = (function ()
                     }
                 );
             }
+        },
+
+        setReducerEnhancer : function setReducerEnhancer(reducerEnhancer)
+        {
+            if(
+                null !== reducerEnhancer
+                && !isFunction(reducerEnhancer)
+            )
+            {
+                throw new TypeError("'reducerEnhancer' must be null or a function.");
+            }
+
+            this._reducerEnhancer = reducerEnhancer;
         }
     }
 
@@ -239,7 +260,19 @@ module.exports = (function ()
         var reduxStore = thisRef._reduxStore;
         if(reduxStore)
         {
-            reduxStore.replaceReducer(_combineReducers(_getReducerMap(thisRef), initialState));
+            var newReducer = _combineReducers(_getReducerMap(thisRef), initialState);
+            var reducerEnhancer = this._reducerEnhancer;
+            var enhancedReducer = (
+                isFunction(reducerEnhancer)
+                    ? reducerEnhancer(newReducer)
+                    : null
+            );
+            if(isFunction(enhancedReducer))
+            {
+                newReducer = enhancedReducer;
+            }
+
+            reduxStore.replaceReducer(newReducer);
         }
     }
 
