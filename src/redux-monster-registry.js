@@ -22,7 +22,7 @@ module.exports = (function ()
     /**
      *  @typedef {{
             name : string;
-            normalized : AnyReduxMonster;
+            monster : AnyReduxMonster;
         }} Registration
      */
 
@@ -106,11 +106,12 @@ module.exports = (function ()
         {
             var registration = this._registrations.get(name);
 
-            return (registration ? registration.normalized : null);
+            return (registration ? registration.monster : null);
         },
 
         /**
          *  @param {AnyReduxMonster} monster
+         *  @param {boolean} [replaceExistingOne]
          */
         registerMonster : function registerMonster(monster)
         {
@@ -118,26 +119,29 @@ module.exports = (function ()
 
             var monsterName = monster.name;
             var registration = this._registrations.get(monsterName) || null;
+
+            var shouldRegister = true;
             if(registration)
             {
                 if(replaceExistingOne)
                 {
                     this.unregisterMonster(monsterName);
                 }
-                else if(registration.normalized !== monster)
+                else
                 {
-                    throw new Error("'" + monsterName + "' is already registered.");
+                    shouldRegister = registration.monster !== monster;
                 }
             }
-            else
+
+            if(shouldRegister)
             {
                 this._registrations.set(monsterName, {
                     name : monsterName,
-                    normalized : monster
+                    monster : monster
                 });
-
+    
                 _replaceReducer(this);
-
+    
                 this._evtEmt.emit(
                     "monsterRegistered",
                     {
@@ -240,8 +244,8 @@ module.exports = (function ()
             .reduce(
                 function (acc, registration)
                 {
-                    var normalized = registration.normalized;
-                    acc[normalized.ownStateKey] = normalized.reducer;
+                    var monster = registration.monster;
+                    acc[monster.ownStateKey] = monster.reducer;
 
                     return acc;
                 },
