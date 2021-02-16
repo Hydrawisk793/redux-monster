@@ -48,7 +48,8 @@ export declare class ReduxMonsterRegistry implements EventListenable<ReduxMonste
 
     public registerMonster(
         monster : ReduxMonster,
-        replaceExistingOne? : boolean
+        replaceExistingOne? : boolean,
+        monsterStateOption? : ReduxMonsterRegistryMonsterStateOption
     ) : void;
 
     public unregisterMonster(
@@ -71,6 +72,17 @@ export declare type ReduxReducerEnhancer<
 > = (
     reducer : ReduxReducer<S, A>
 ) => ReduxReducer<S, A>;
+
+export declare enum ReduxMonsterRegistryMonsterStateOption
+{
+    preserve = 0,
+
+    mergeNewPropertiesOnly = 1,
+
+    merge = 2,
+
+    reset = 3,
+}
 
 export declare interface ReduxMonsterRegistryEventMap
 {

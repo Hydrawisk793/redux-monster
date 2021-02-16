@@ -26,6 +26,30 @@ module.exports = (function ()
         }} Registration
      */
 
+    var _emptyAction = { type : "" };
+
+    var _internalActionTypePrefix = "__REDUX_MONSTER_REGISTRY_";
+    /**
+     *  @readonly
+     *  @enum {string}
+     */
+    var _InternalActionType = {
+        "MERGE" : _internalActionTypePrefix + "MERGE",
+        "MERGE_NEW_PROPERTIES_ONLY" : _internalActionTypePrefix + "MERGE_NEW_PROPERTIES_ONLY",
+        "RESET" : _internalActionTypePrefix + "RESET"
+    };
+
+    /**
+     *  @readonly
+     *  @enum {number}
+     */
+    var ReduxMonsterRegistryMonsterStateOption = {
+        preserve : 0,
+        mergeNewPropertiesOnly : 1,
+        merge : 2,
+        reset : 3
+    };
+
     /**
      *  @constructor
      *  @param {Store} reduxStore
@@ -112,10 +136,21 @@ module.exports = (function ()
         /**
          *  @param {AnyReduxMonster} monster
          *  @param {boolean} [replaceExistingOne]
+         *  @param {ReduxMonsterRegistryMonsterStateOption} [monsterStateOption]
          */
         registerMonster : function registerMonster(monster)
         {
             var replaceExistingOne = !!arguments[1];
+
+            var monsterStateOption = arguments[2];
+            if(
+                !Number.isSafeInteger(monsterStateOption)
+                || monsterStateOption < ReduxMonsterRegistryMonsterStateOption.preserve
+                || monsterStateOption > ReduxMonsterRegistryMonsterStateOption.reset
+            )
+            {
+                monsterStateOption = ReduxMonsterRegistryMonsterStateOption.preserve;
+            }
 
             var monsterName = monster.name;
             var registration = this._registrations.get(monsterName) || null;
@@ -139,9 +174,39 @@ module.exports = (function ()
                     name : monsterName,
                     monster : monster
                 });
-    
+
                 _replaceReducer(this);
-    
+
+                switch(monsterStateOption)
+                {
+                case ReduxMonsterRegistryMonsterStateOption.mergeNewPropertiesOnly:
+                    this._reduxStore.dispatch({
+                        type : _InternalActionType.MERGE_NEW_PROPERTIES_ONLY,
+                        payload : {
+                            ownStateKey : monster.ownStateKey
+                        }
+                    });
+                    break;
+                case ReduxMonsterRegistryMonsterStateOption.merge:
+                    this._reduxStore.dispatch({
+                        type : _InternalActionType.MERGE,
+                        payload : {
+                            ownStateKey : monster.ownStateKey
+                        }
+                    });
+                    break;
+                case ReduxMonsterRegistryMonsterStateOption.reset:
+                    this._reduxStore.dispatch({
+                        type : _InternalActionType.RESET,
+                        payload : {
+                            ownStateKey : monster.ownStateKey
+                        }
+                    });
+                    break;
+                default:
+                    // Does nothing.
+                }
+
                 this._evtEmt.emit(
                     "monsterRegistered",
                     {
@@ -305,7 +370,7 @@ module.exports = (function ()
             ;
         }
 
-        return (
+        var combinedReducer = (
             Object.keys(finalReducerMap).length > 0
                 ? combineReducers(finalReducerMap)
                 : function (state)
@@ -313,9 +378,53 @@ module.exports = (function ()
                     return ("undefined" === typeof state ? initialState : state);
                 }
         );
+
+        return function (state, action)
+        {
+            var nextState = state;
+
+            var initialMonsterState;
+            var ownStateKey;
+            switch(action.type)
+            {
+            case _InternalActionType.MERGE_NEW_PROPERTIES_ONLY:
+                ownStateKey = action.payload.ownStateKey;
+                nextState = Object.assign({}, nextState);
+                nextState[ownStateKey] = Object.assign({}, nextState[ownStateKey]);
+
+                initialMonsterState = finalReducerMap[ownStateKey](void 0, _emptyAction);
+                Object.keys(initialMonsterState).forEach(function (key)
+                {
+                    if(nextState[ownStateKey] && !(key in nextState[ownStateKey]))
+                    {
+                        nextState[ownStateKey][key] = initialMonsterState[key];
+                    }
+                });
+                break;
+            case _InternalActionType.MERGE:
+                ownStateKey = action.payload.ownStateKey;
+                nextState = Object.assign({}, nextState);
+                nextState[ownStateKey] = Object.assign(
+                    {},
+                    nextState[ownStateKey],
+                    finalReducerMap[ownStateKey](void 0, _emptyAction)
+                );
+                break;
+            case _InternalActionType.RESET:
+                ownStateKey = action.payload.ownStateKey;
+                nextState = Object.assign({}, nextState);
+                nextState[ownStateKey] = finalReducerMap[ownStateKey](void 0, _emptyAction);
+                break;
+            default:
+                nextState = combinedReducer(state, action);
+            }
+
+            return nextState;
+        };
     }
 
     return {
-        ReduxMonsterRegistry : ReduxMonsterRegistry
+        ReduxMonsterRegistry : ReduxMonsterRegistry,
+        ReduxMonsterRegistryMonsterStateOption : ReduxMonsterRegistryMonsterStateOption
     };
 })();
