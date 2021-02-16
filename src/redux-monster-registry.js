@@ -298,7 +298,7 @@ module.exports = (function ()
                     {
                         finalReducerMap[key] = function (state)
                         {
-                            return ("undefined" === typeof state ? null : state);
+                            return ("undefined" === typeof state ? initialState[key] : state);
                         };
                     }
                 })
