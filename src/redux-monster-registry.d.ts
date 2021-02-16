@@ -1,7 +1,8 @@
 import { EventListenable } from "kaphein-js-event-emitter";
 import { Store } from "redux";
 
-import { ReduxMonster } from "./redux-monster";
+import { FluxStandardAction } from "./flux-standard-action";
+import { ReduxMonster, ReduxReducer } from "./redux-monster";
 
 export declare class ReduxMonsterRegistry implements EventListenable<ReduxMonsterRegistryEventListenerMap>
 {
@@ -10,7 +11,8 @@ export declare class ReduxMonsterRegistry implements EventListenable<ReduxMonste
     ) : ReduxMonsterRegistry | null;
 
     public constructor(
-        reduxStore : Store
+        reduxStore : Store,
+        option? : ReduxMonsterRegistryOption | null
     );
 
     public addListener<K extends keyof ReduxMonsterRegistryEventListenerMap>(
@@ -46,12 +48,40 @@ export declare class ReduxMonsterRegistry implements EventListenable<ReduxMonste
 
     public registerMonster(
         monster : ReduxMonster,
-        replaceExistingOne? : boolean
+        replaceExistingOne? : boolean,
+        monsterStateOption? : ReduxMonsterRegistryMonsterStateOption
     ) : void;
 
     public unregisterMonster(
         name : string,
     ) : void;
+
+    public setReducerEnhancer(
+        reducerEnhancer : ReduxReducerEnhancer | null
+    ) : void;
+}
+
+export declare interface ReduxMonsterRegistryOption
+{
+    reducerEnhancer? : ReduxReducerEnhancer | null;
+}
+
+export declare type ReduxReducerEnhancer<
+    S = any,
+    A extends FluxStandardAction = FluxStandardAction
+> = (
+    reducer : ReduxReducer<S, A>
+) => ReduxReducer<S, A>;
+
+export declare enum ReduxMonsterRegistryMonsterStateOption
+{
+    preserve = 0,
+
+    mergeNewPropertiesOnly = 1,
+
+    merge = 2,
+
+    reset = 3,
 }
 
 export declare interface ReduxMonsterRegistryEventMap

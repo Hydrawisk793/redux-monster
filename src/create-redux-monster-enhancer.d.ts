@@ -1,7 +1,9 @@
 import { StoreEnhancerStoreCreator } from "redux";
-import { ReduxMonsterRegistry } from "./redux-monster-registry";
+import { ReduxMonsterRegistry, ReduxMonsterRegistryOption } from "./redux-monster-registry";
 
-export declare function createReduxMonsterEnhancer() : <
+export declare function createReduxMonsterEnhancer(
+    registryOption? : ReduxMonsterRegistryOption | null
+) : <
     Ext = any,
     StoreExt = any
 >(

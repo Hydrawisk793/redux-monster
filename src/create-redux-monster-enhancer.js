@@ -6,9 +6,17 @@ module.exports = (function ()
      *  @template Ext, StoreExt
      *  @typedef {import("redux").StoreEnhancerStoreCreator<Ext, StoreExt>} StoreEnhancerStoreCreator
      */
+    /**
+     *  @typedef {import("./redux-monster-registry").ReduxMonsterRegistryOption} ReduxMonsterRegistryOption
+     */
 
+    /**
+     *  @param {ReduxMonsterRegistryOption} [registryOption]
+     */
     function createReduxMonsterEnhancer()
     {
+        var registryOption = arguments[1];
+
         /**
          *  @template Ext
          *  @template StoreExt
@@ -24,12 +32,11 @@ module.exports = (function ()
             function createStore(reducer)
             {
                 var initialState = arguments[1];
-                var store = next(reducer, initialState);
+                var store = Object.assign({}, next(reducer, initialState));
 
-                var enhancedStore = Object.assign({}, store);
-                new ReduxMonsterRegistry(enhancedStore);
+                new ReduxMonsterRegistry(store, registryOption);
 
-                return enhancedStore;
+                return store;
             }
 
             return createStore;

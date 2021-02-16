@@ -15,21 +15,50 @@ module.exports = (function ()
      *  @typedef {import("./redux-monster").ReduxMonster} AnyReduxMonster
      *  @typedef {import("./redux-monster").ReduxReducer} AnyReduxReducer
      *  @typedef {import("./redux-monster-registry").ReduxMonsterRegistryEventListenerMap} ReduxMonsterRegistryEventListenerMap
+     *  @typedef {import("./redux-monster-registry").ReduxMonsterRegistryOption} ReduxMonsterRegistryOption
+     *  @typedef {import("./redux-monster-registry").ReduxReducerEnhancer} AnyReduxReducerEnhancer
      */
 
     /**
      *  @typedef {{
             name : string;
-            normalized : AnyReduxMonster;
+            monster : AnyReduxMonster;
         }} Registration
      */
+
+    var _emptyAction = { type : "" };
+
+    var _internalActionTypePrefix = "__REDUX_MONSTER_REGISTRY_";
+    /**
+     *  @readonly
+     *  @enum {string}
+     */
+    var _InternalActionType = {
+        "MERGE" : _internalActionTypePrefix + "MERGE",
+        "MERGE_NEW_PROPERTIES_ONLY" : _internalActionTypePrefix + "MERGE_NEW_PROPERTIES_ONLY",
+        "RESET" : _internalActionTypePrefix + "RESET"
+    };
+
+    /**
+     *  @readonly
+     *  @enum {number}
+     */
+    var ReduxMonsterRegistryMonsterStateOption = {
+        preserve : 0,
+        mergeNewPropertiesOnly : 1,
+        merge : 2,
+        reset : 3
+    };
 
     /**
      *  @constructor
      *  @param {Store} reduxStore
+     *  @param {ReduxMonsterRegistryOption | null} [option]
      */
     function ReduxMonsterRegistry(reduxStore)
     {
+        /** @type {ReduxMonsterRegistryOption | null} */var option = Object.assign({}, arguments[1]);
+
         if(isUndefinedOrNull(reduxStore))
         {
             throw new TypeError("'reduxStore' must satisfy \"redux\".Store interface.");
@@ -44,6 +73,9 @@ module.exports = (function ()
         });
         this._registrations = new StringKeyMap(/** @type {Iterable<[string, Registration]>} */(null));
         /** @type {Store} */this._reduxStore = null;
+        /** @type {AnyReduxReducerEnhancer} */this._reducerEnhancer = null;
+
+        this.setReducerEnhancer(option.reducerEnhancer || null);
 
         _setReduxStore(this, reduxStore);
     }
@@ -98,37 +130,82 @@ module.exports = (function ()
         {
             var registration = this._registrations.get(name);
 
-            return (registration ? registration.normalized : null);
+            return (registration ? registration.monster : null);
         },
 
         /**
          *  @param {AnyReduxMonster} monster
+         *  @param {boolean} [replaceExistingOne]
+         *  @param {ReduxMonsterRegistryMonsterStateOption} [monsterStateOption]
          */
         registerMonster : function registerMonster(monster)
         {
             var replaceExistingOne = !!arguments[1];
 
+            var monsterStateOption = arguments[2];
+            if(
+                !Number.isSafeInteger(monsterStateOption)
+                || monsterStateOption < ReduxMonsterRegistryMonsterStateOption.preserve
+                || monsterStateOption > ReduxMonsterRegistryMonsterStateOption.reset
+            )
+            {
+                monsterStateOption = ReduxMonsterRegistryMonsterStateOption.preserve;
+            }
+
             var monsterName = monster.name;
             var registration = this._registrations.get(monsterName) || null;
+
+            var shouldRegister = true;
             if(registration)
             {
                 if(replaceExistingOne)
                 {
                     this.unregisterMonster(monsterName);
                 }
-                else if(registration.normalized !== monster)
+                else
                 {
-                    throw new Error("'" + monsterName + "' is already registered.");
+                    shouldRegister = registration.monster !== monster;
                 }
             }
-            else
+
+            if(shouldRegister)
             {
                 this._registrations.set(monsterName, {
                     name : monsterName,
-                    normalized : monster
+                    monster : monster
                 });
 
                 _replaceReducer(this);
+
+                switch(monsterStateOption)
+                {
+                case ReduxMonsterRegistryMonsterStateOption.mergeNewPropertiesOnly:
+                    this._reduxStore.dispatch({
+                        type : _InternalActionType.MERGE_NEW_PROPERTIES_ONLY,
+                        payload : {
+                            ownStateKey : monster.ownStateKey
+                        }
+                    });
+                    break;
+                case ReduxMonsterRegistryMonsterStateOption.merge:
+                    this._reduxStore.dispatch({
+                        type : _InternalActionType.MERGE,
+                        payload : {
+                            ownStateKey : monster.ownStateKey
+                        }
+                    });
+                    break;
+                case ReduxMonsterRegistryMonsterStateOption.reset:
+                    this._reduxStore.dispatch({
+                        type : _InternalActionType.RESET,
+                        payload : {
+                            ownStateKey : monster.ownStateKey
+                        }
+                    });
+                    break;
+                default:
+                    // Does nothing.
+                }
 
                 this._evtEmt.emit(
                     "monsterRegistered",
@@ -157,6 +234,19 @@ module.exports = (function ()
                     }
                 );
             }
+        },
+
+        setReducerEnhancer : function setReducerEnhancer(reducerEnhancer)
+        {
+            if(
+                null !== reducerEnhancer
+                && !isFunction(reducerEnhancer)
+            )
+            {
+                throw new TypeError("'reducerEnhancer' must be null or a function.");
+            }
+
+            this._reducerEnhancer = reducerEnhancer;
         }
     }
 
@@ -219,8 +309,8 @@ module.exports = (function ()
             .reduce(
                 function (acc, registration)
                 {
-                    var normalized = registration.normalized;
-                    acc[normalized.ownStateKey] = normalized.reducer;
+                    var monster = registration.monster;
+                    acc[monster.ownStateKey] = monster.reducer;
 
                     return acc;
                 },
@@ -239,7 +329,19 @@ module.exports = (function ()
         var reduxStore = thisRef._reduxStore;
         if(reduxStore)
         {
-            reduxStore.replaceReducer(_combineReducers(_getReducerMap(thisRef), initialState));
+            var newReducer = _combineReducers(_getReducerMap(thisRef), initialState);
+            var reducerEnhancer = this._reducerEnhancer;
+            var enhancedReducer = (
+                isFunction(reducerEnhancer)
+                    ? reducerEnhancer(newReducer)
+                    : null
+            );
+            if(isFunction(enhancedReducer))
+            {
+                newReducer = enhancedReducer;
+            }
+
+            reduxStore.replaceReducer(newReducer);
         }
     }
 
@@ -261,14 +363,14 @@ module.exports = (function ()
                     {
                         finalReducerMap[key] = function (state)
                         {
-                            return ("undefined" === typeof state ? null : state);
+                            return ("undefined" === typeof state ? initialState[key] : state);
                         };
                     }
                 })
             ;
         }
 
-        return (
+        var combinedReducer = (
             Object.keys(finalReducerMap).length > 0
                 ? combineReducers(finalReducerMap)
                 : function (state)
@@ -276,9 +378,53 @@ module.exports = (function ()
                     return ("undefined" === typeof state ? initialState : state);
                 }
         );
+
+        return function (state, action)
+        {
+            var nextState = state;
+
+            var initialMonsterState;
+            var ownStateKey;
+            switch(action.type)
+            {
+            case _InternalActionType.MERGE_NEW_PROPERTIES_ONLY:
+                ownStateKey = action.payload.ownStateKey;
+                nextState = Object.assign({}, nextState);
+                nextState[ownStateKey] = Object.assign({}, nextState[ownStateKey]);
+
+                initialMonsterState = finalReducerMap[ownStateKey](void 0, _emptyAction);
+                Object.keys(initialMonsterState).forEach(function (key)
+                {
+                    if(nextState[ownStateKey] && !(key in nextState[ownStateKey]))
+                    {
+                        nextState[ownStateKey][key] = initialMonsterState[key];
+                    }
+                });
+                break;
+            case _InternalActionType.MERGE:
+                ownStateKey = action.payload.ownStateKey;
+                nextState = Object.assign({}, nextState);
+                nextState[ownStateKey] = Object.assign(
+                    {},
+                    nextState[ownStateKey],
+                    finalReducerMap[ownStateKey](void 0, _emptyAction)
+                );
+                break;
+            case _InternalActionType.RESET:
+                ownStateKey = action.payload.ownStateKey;
+                nextState = Object.assign({}, nextState);
+                nextState[ownStateKey] = finalReducerMap[ownStateKey](void 0, _emptyAction);
+                break;
+            default:
+                nextState = combinedReducer(state, action);
+            }
+
+            return nextState;
+        };
     }
 
     return {
-        ReduxMonsterRegistry : ReduxMonsterRegistry
+        ReduxMonsterRegistry : ReduxMonsterRegistry,
+        ReduxMonsterRegistryMonsterStateOption : ReduxMonsterRegistryMonsterStateOption
     };
 })();
