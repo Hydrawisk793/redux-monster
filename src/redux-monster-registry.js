@@ -183,7 +183,7 @@ module.exports = (function ()
                     this._reduxStore.dispatch({
                         type : _InternalActionType.MERGE_NEW_PROPERTIES_ONLY,
                         payload : {
-                            ownStateKey : monster.ownStateKey
+                            monsterName : monsterName
                         }
                     });
                     break;
@@ -191,7 +191,7 @@ module.exports = (function ()
                     this._reduxStore.dispatch({
                         type : _InternalActionType.MERGE,
                         payload : {
-                            ownStateKey : monster.ownStateKey
+                            monsterName : monsterName
                         }
                     });
                     break;
@@ -199,7 +199,7 @@ module.exports = (function ()
                     this._reduxStore.dispatch({
                         type : _InternalActionType.RESET,
                         payload : {
-                            ownStateKey : monster.ownStateKey
+                            monsterName : monsterName
                         }
                     });
                     break;
@@ -329,7 +329,7 @@ module.exports = (function ()
         var reduxStore = thisRef._reduxStore;
         if(reduxStore)
         {
-            var newReducer = _combineReducers(_getReducerMap(thisRef), initialState);
+            var newReducer = _combineReducers(thisRef, _getReducerMap(thisRef), initialState);
             var reducerEnhancer = this._reducerEnhancer;
             var enhancedReducer = (
                 isFunction(reducerEnhancer)
@@ -346,12 +346,13 @@ module.exports = (function ()
     }
 
     /**
+     *  @param {ReduxMonsterRegistry} thisRef
      *  @param {Record<string, AnyReduxReducer>} reducerMap
      *  @param {Record<string, any> | null} [initialState]
      */
-    function _combineReducers(reducerMap)
+    function _combineReducers(thisRef, reducerMap)
     {
-        var initialState = arguments[1] || null;
+        var initialState = arguments[2] || null;
         var finalReducerMap = Object.assign({}, reducerMap);
         if(initialState)
         {
@@ -383,37 +384,66 @@ module.exports = (function ()
         {
             var nextState = state;
 
-            var initialMonsterState;
+            var payload = action.payload;
+            var registration;
+            var monster;
+            var monsterName;
+            var monsterReducer;
+            var monsterInitialState;
             var ownStateKey;
             switch(action.type)
             {
             case _InternalActionType.MERGE_NEW_PROPERTIES_ONLY:
-                ownStateKey = action.payload.ownStateKey;
-                nextState = Object.assign({}, nextState);
-                nextState[ownStateKey] = Object.assign({}, nextState[ownStateKey]);
-
-                initialMonsterState = finalReducerMap[ownStateKey](void 0, _emptyAction);
-                Object.keys(initialMonsterState).forEach(function (key)
+                monsterName = payload.monsterName;
+                registration = thisRef._registrations.get(monsterName) || null;
+                if(registration)
                 {
-                    if(nextState[ownStateKey] && !(key in nextState[ownStateKey]))
+                    monster = registration.monster;
+                    ownStateKey = monster.ownStateKey;
+                    monsterReducer = monster.reducer;
+    
+                    nextState = Object.assign({}, nextState);
+                    nextState[ownStateKey] = Object.assign({}, nextState[ownStateKey]);
+    
+                    monsterInitialState = monsterReducer(void 0, _emptyAction);
+                    Object.keys(monsterInitialState).forEach(function (key)
                     {
-                        nextState[ownStateKey][key] = initialMonsterState[key];
-                    }
-                });
+                        if(nextState[ownStateKey] && !(key in nextState[ownStateKey]))
+                        {
+                            nextState[ownStateKey][key] = monsterInitialState[key];
+                        }
+                    });
+                }
                 break;
             case _InternalActionType.MERGE:
-                ownStateKey = action.payload.ownStateKey;
-                nextState = Object.assign({}, nextState);
-                nextState[ownStateKey] = Object.assign(
-                    {},
-                    nextState[ownStateKey],
-                    finalReducerMap[ownStateKey](void 0, _emptyAction)
-                );
+                monsterName = payload.monsterName;
+                registration = thisRef._registrations.get(monsterName) || null;
+                if(registration)
+                {
+                    monster = registration.monster;
+                    ownStateKey = monster.ownStateKey;
+                    monsterReducer = monster.reducer;
+
+                    nextState = Object.assign({}, nextState);
+                    nextState[ownStateKey] = Object.assign(
+                        {},
+                        nextState[ownStateKey],
+                        monsterReducer(void 0, _emptyAction)
+                    );
+                }
                 break;
             case _InternalActionType.RESET:
-                ownStateKey = action.payload.ownStateKey;
-                nextState = Object.assign({}, nextState);
-                nextState[ownStateKey] = finalReducerMap[ownStateKey](void 0, _emptyAction);
+                monsterName = payload.monsterName;
+                registration = thisRef._registrations.get(monsterName) || null;
+                if(registration)
+                {
+                    monster = registration.monster;
+                    ownStateKey = monster.ownStateKey;
+                    monsterReducer = monster.reducer;
+
+                    nextState = Object.assign({}, nextState);
+                    nextState[ownStateKey] = monsterReducer(void 0, _emptyAction);
+                }
                 break;
             default:
                 nextState = combinedReducer(state, action);
