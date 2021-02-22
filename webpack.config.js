@@ -1,7 +1,5 @@
 var path = require("path");
-
 var CopyWebpackPlugin = require("copy-webpack-plugin");
-var TerserPlugin = require("terser-webpack-plugin");
 var nodeExternals = require("webpack-node-externals");
 
 module.exports = (function ()
@@ -17,9 +15,6 @@ module.exports = (function ()
             library : "reduxMonster",
             libraryTarget : "umd",
             globalObject : "this"
-        },
-        optimization : {
-            minimizer : [new TerserPlugin()]
         },
         plugins : [
             new CopyWebpackPlugin({
