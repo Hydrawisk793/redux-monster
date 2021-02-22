@@ -401,10 +401,10 @@ module.exports = (function ()
                     monster = registration.monster;
                     ownStateKey = monster.ownStateKey;
                     monsterReducer = monster.reducer;
-    
+
                     nextState = Object.assign({}, nextState);
                     nextState[ownStateKey] = Object.assign({}, nextState[ownStateKey]);
-    
+
                     monsterInitialState = monsterReducer(void 0, _emptyAction);
                     Object.keys(monsterInitialState).forEach(function (key)
                     {
