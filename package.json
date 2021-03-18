@@ -2,30 +2,31 @@
     "name": "redux-monster",
     "version": "0.3.1",
     "description": "A proposal for modularization ecosystem of redux component packages.",
+    "author": "Hydrawisk793 <hyw793@gmail.com>",
+    "license": "MIT",
     "main": "dist/index.js",
-    "module": "dist/index.js",
     "types": "dist/index.d.ts",
     "files": [
         "dist"
     ],
+    "keywords": [
+        "reudx"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Hydrawisk793/redux-monster.git"
+    },
+    "bugs": {
+        "url": "https://github.com/Hydrawisk793/redux-monster/issues"
+    },
+    "homepage": "https://github.com/Hydrawisk793/redux-monster#readme",
     "scripts": {
         "lint": "tsc --project tsconfig.dts.json && eslint src/**/*.js",
         "lint:fix": "npm run lint -- --fix",
         "build": "rm -rf dist && npm run lint && webpack --mode production --config webpack.config.js",
         "prepack": "npm install && npm run build"
     },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/Hydrawisk793/redux-monster.git"
-    },
-    "keywords": [],
-    "author": "Hydrawisk793 <hyw793@gmail.com>",
-    "license": "MIT",
-    "bugs": {
-        "url": "https://github.com/Hydrawisk793/redux-monster/issues"
-    },
-    "homepage": "https://github.com/Hydrawisk793/redux-monster#readme",
-    "bundleDependencies": [],
+    "bundledDependencies": [],
     "dependencies": {
         "kaphein-js": "~0.14.3",
         "kaphein-js-event-emitter": "~0.1.2"
