@@ -4,7 +4,7 @@ import { ReduxReducer, ReduxActionCreator, ReduxSelector, ReduxMonster } from ".
 export declare interface createMonster<
     Context = any,
     OwnState = any,
-    ReducerFactories = Record<string, ReducerFactory<OwnState, Context>>,
+    Reducers = Record<string, ReduxReducer<OwnState>>,
     ActionCreatorFactories = Record<string, ActionCreatorFactory<Context>>,
     SelectorFactories = Record<string, SelectorFactory<OwnState, Context>>
 >
@@ -13,14 +13,14 @@ export declare interface createMonster<
         param : MonsterCreatorParam<
             Context,
             OwnState,
-            ReducerFactories,
+            Reducers,
             ActionCreatorFactories,
             SelectorFactories
         >
     ) : FactoredMonster<
         Context,
         OwnState,
-        ReducerFactories,
+        Reducers,
         ActionCreatorFactories,
         SelectorFactories
     >;
@@ -29,21 +29,21 @@ export declare interface createMonster<
 export declare function createMonster<
     Context = any,
     OwnState = any,
-    ReducerFactories = Record<string, ReducerFactory<OwnState, Context>>,
+    Reducers = Record<string, ReduxReducer<OwnState>>,
     ActionCreatorFactories = Record<string, ActionCreatorFactory<Context>>,
     SelectorFactories = Record<string, SelectorFactory<OwnState, Context>>
 >(
     param : MonsterCreatorParam<
         Context,
         OwnState,
-        ReducerFactories,
+        Reducers,
         ActionCreatorFactories,
         SelectorFactories
     >
 ) : FactoredMonster<
     Context,
     OwnState,
-    ReducerFactories,
+    Reducers,
     ActionCreatorFactories,
     SelectorFactories
 >;
@@ -51,12 +51,12 @@ export declare function createMonster<
 export declare type FactoredMonster<
     Context = any,
     OwnState = any,
-    ReducerFactories = Record<string, ReducerFactory<OwnState, Context>>,
+    Reducers = Record<string, ReduxReducer<OwnState>>,
     ActionCreatorFactories = Record<string, ActionCreatorFactory<Context>>,
     SelectorFactories = Record<string, SelectorFactory<OwnState, Context>>,
 > = ReduxMonster<
     OwnState,
-    PickReturnTypes<ReducerFactories>,
+    Reducers,
     PickReturnTypes<ActionCreatorFactories>,
     PickReturnTypes<SelectorFactories>
 >;
@@ -64,7 +64,7 @@ export declare type FactoredMonster<
 export declare interface MonsterCreatorParam<
     Context = any,
     OwnState = any,
-    ReducerFactories = Record<string, ReducerFactory<OwnState, Context>>,
+    Reducers = Record<string, ReduxReducer<OwnState>>,
     ActionCreatorFactories = Record<string, ActionCreatorFactory<Context>>,
     SelectorFactories = Record<string, SelectorFactory<OwnState, Context>>,
 >
@@ -77,9 +77,9 @@ export declare interface MonsterCreatorParam<
 
     initialState? : OwnState;
 
-    reducerFactories? : PickExtends<
-        ReducerFactories,
-        ReducerFactory<OwnState, Context>
+    reducers? : PickExtends<
+        Reducers,
+        ReduxReducer<OwnState>
     >;
 
     actionCreatorFactories? : PickExtends<
@@ -92,13 +92,6 @@ export declare interface MonsterCreatorParam<
         SelectorFactory<OwnState, Context>
     >;
 }
-
-export declare type ReducerFactory<
-    OwnState = any,
-    Context = any
-> = (
-    context : Context
-) => ReduxReducer<OwnState>;
 
 export declare type ActionCreatorFactory<
     Context = any

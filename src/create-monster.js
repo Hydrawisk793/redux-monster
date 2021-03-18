@@ -40,15 +40,14 @@ module.exports = (function ()
             reducer : null,
             reducers : (
                 new StringKeyMap(Object
-                    .entries(param.reducerFactories || {})
+                    .entries(param.reducers || {})
                     .map(function (pair)
                     {
-                        var funcGen = pair[1];
-                        var func = ("function" === typeof funcGen ? funcGen(context) : null);
+                        var reducer = pair[1];
 
                         return (
-                            "function" === typeof func
-                                ? [pair[0], func]
+                            "function" === typeof reducer
+                                ? [pair[0], reducer]
                                 : null
                         );
                     })
