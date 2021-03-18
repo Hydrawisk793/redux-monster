@@ -1,4 +1,4 @@
-import { Assign, PickExtends } from "kaphein-ts-type-utils";
+import { Assign, ExtractExtends, PickExtends } from "kaphein-ts-type-utils";
 
 import {
     PickReturnTypes,
@@ -9,6 +9,7 @@ import {
     ReduxSelector,
     ReduxMonster,
     AnyReduxMonster,
+    AnyReduxSelector,
 } from "./redux-monster";
 import {
     ReduxMonsterRegistry,
@@ -49,7 +50,7 @@ export declare interface createMonster<
         OwnState,
         Reducers,
         PickReturnTypes<ActionCreatorFactories>,
-        PickReturnTypes<SelectorFactories>
+        FactoredReduxSelectorMap<PickReturnTypes<SelectorFactories>>
     >;
 }
 
@@ -86,7 +87,7 @@ export declare function createMonster<
     OwnState,
     Reducers,
     PickReturnTypes<ActionCreatorFactories>,
-    PickReturnTypes<SelectorFactories>
+    FactoredReduxSelectorMap<PickReturnTypes<SelectorFactories>>
 >;
 
 export declare interface MonsterCreatorParam<
@@ -152,3 +153,17 @@ export declare interface FactoredReduxMonsterDefaultContext
 {
     monster : AnyReduxMonster;
 }
+
+export declare type FactoredReduxSelectorMap<
+    Selectors = Record<string, AnyReduxSelector>,
+    ReduxStoreState = any
+> = Omit<
+    {
+        [K in keyof Selectors] : (
+            Selectors[K] extends ReduxSelector<infer S, infer RestArgs, infer R>
+                ? ReduxSelector<ReduxStoreState, RestArgs, R>
+                : never
+        );
+    },
+    never
+>;

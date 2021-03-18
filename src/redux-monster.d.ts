@@ -11,7 +11,7 @@ export declare interface ReduxMonster<
     OwnState = any,
     Reducers = Record<string, ReduxReducer<OwnState>>,
     ActionCreators = Record<string, ReduxActionCreator>,
-    Selectors = Record<string, ReduxSelector<OwnState>>
+    Selectors = Record<string, AnyReduxSelector>
 >
 {
     name : Name;
@@ -41,7 +41,7 @@ export declare interface ReduxMonster<
 
     selectors : PickExtends<
         Selectors,
-        ReduxSelector<OwnState>
+        AnyReduxSelector
     >;
 }
 
@@ -51,7 +51,7 @@ export declare type AnyReduxMonster = ReduxMonster<
     any,
     Record<string, ReduxReducer<any>>,
     Record<string, ReduxActionCreator>,
-    Record<string, ReduxSelector<any>>
+    Record<string, AnyReduxSelector>
 >;
 
 export declare type ReduxReducer<
@@ -80,3 +80,9 @@ export declare type ReduxSelector<
     state : State,
     ...args : RestArgs
 ) => R;
+
+export declare type AnyReduxSelector = ReduxSelector<
+    any,
+    any[],
+    any
+>;
