@@ -1,5 +1,5 @@
-var kapheinJs = require("kaphein-js");
-var StringKeyMap = kapheinJs.StringKeyMap;
+var kapheinJsCollection = require("kaphein-js-collection");
+var StringKeyMap = kapheinJsCollection.StringKeyMap;
 
 module.exports = (function ()
 {

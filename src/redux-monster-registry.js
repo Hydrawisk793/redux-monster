@@ -1,8 +1,9 @@
-var kapheinJs = require("kaphein-js");
-var isFunction = kapheinJs.isFunction;
-var isUndefinedOrNull = kapheinJs.isUndefinedOrNull;
-var isNonNullObject = kapheinJs.isNonNullObject;
-var StringKeyMap = kapheinJs.StringKeyMap;
+var kapheinJsTypeTrait = require("kaphein-js-type-trait");
+var isFunction = kapheinJsTypeTrait.isFunction;
+var isDefinedAndNotNull = kapheinJsTypeTrait.isDefinedAndNotNull;
+var isNonNullObject = kapheinJsTypeTrait.isNonNullObject;
+var kapheinJsCollection = require("kaphein-js-collection");
+var StringKeyMap = kapheinJsCollection.StringKeyMap;
 var EventEmitter = require("kaphein-js-event-emitter").EventEmitter;
 var combineReducers = require("redux").combineReducers;
 
@@ -60,7 +61,7 @@ module.exports = (function ()
     {
         /** @type {ReduxMonsterRegistryOption | null} */var option = Object.assign({}, arguments[1]);
 
-        if(isUndefinedOrNull(reduxStore))
+        if(!isDefinedAndNotNull(reduxStore))
         {
             throw new TypeError("'reduxStore' must satisfy \"redux\".Store interface.");
         }
@@ -246,7 +247,7 @@ module.exports = (function ()
     {
         return (
             (
-                !isUndefinedOrNull(store)
+                isDefinedAndNotNull(store)
                 && ("getMonsterRegistry" in store)
                 && isFunction(store.getMonsterRegistry)
             )
