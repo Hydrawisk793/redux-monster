@@ -12,11 +12,11 @@ module.exports = (function ()
      *  @typedef {import("redux").Store} Store
      */
     /**
-     *  @typedef {import("./redux-monster").ReduxMonster} AnyReduxMonster
-     *  @typedef {import("./redux-monster").ReduxReducer} AnyReduxReducer
+     *  @typedef {import("./redux-monster").AnyReduxMonster} AnyReduxMonster
+     *  @typedef {import("./redux-monster").AnyReduxReducer} AnyReduxReducer
      *  @typedef {import("./redux-monster-registry").ReduxMonsterRegistryEventListenerMap} ReduxMonsterRegistryEventListenerMap
      *  @typedef {import("./redux-monster-registry").ReduxMonsterRegistryOption} ReduxMonsterRegistryOption
-     *  @typedef {import("./redux-monster-registry").ReduxReducerEnhancer} AnyReduxReducerEnhancer
+     *  @typedef {import("./redux-monster-registry").AnyReduxReducerEnhancer} AnyReduxReducerEnhancer
      */
 
     /**
@@ -29,6 +29,7 @@ module.exports = (function ()
     var _emptyAction = { type : "" };
 
     var _internalActionTypePrefix = "__REDUX_MONSTER_REGISTRY_";
+
     /**
      *  @readonly
      *  @enum {string}
@@ -252,7 +253,7 @@ module.exports = (function ()
     /**
      *  @param {ReduxMonsterRegistry} thisRef
      *  @param {Store | null} reduxStore
-     *  @param {Record<string, any> | null} [initialState]
+     *  @param {any} [initialState]
      */
     function _setReduxStore(thisRef, reduxStore)
     {
@@ -300,7 +301,7 @@ module.exports = (function ()
 
                     return acc;
                 },
-                {}
+                /** @type {Record<string, AnyReduxReducer>} */({})
             )
         ;
     }
@@ -335,7 +336,7 @@ module.exports = (function ()
 
     /**
      *  @param {ReduxMonsterRegistry} thisRef
-     *  @param {Record<string, any> | null} [initialState]
+     *  @param {any} [initialState]
      */
     function _replaceReducer(thisRef)
     {
@@ -362,7 +363,7 @@ module.exports = (function ()
     /**
      *  @param {ReduxMonsterRegistry} thisRef
      *  @param {Record<string, AnyReduxReducer>} reducerMap
-     *  @param {Record<string, any> | null} [initialState]
+     *  @param {any} [initialState]
      */
     function _combineReducers(thisRef, reducerMap)
     {
@@ -385,7 +386,7 @@ module.exports = (function ()
             ;
         }
 
-        var combinedReducer = (
+        var combinedReducer = /** @type {AnyReduxReducer} */(
             Object.keys(finalReducerMap).length > 0
                 ? combineReducers(finalReducerMap)
                 : function (state)
@@ -394,7 +395,7 @@ module.exports = (function ()
                 }
         );
 
-        return function (state, action)
+        return /** @type {AnyReduxReducer} */(function (state, action)
         {
             var nextState = state;
 
@@ -464,7 +465,7 @@ module.exports = (function ()
             }
 
             return nextState;
-        };
+        });
     }
 
     return {

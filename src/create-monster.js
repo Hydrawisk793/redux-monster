@@ -3,30 +3,31 @@ var StringKeyMap = kapheinJs.StringKeyMap;
 
 module.exports = (function ()
 {
+    /**
+     *  @template N, K, C, O, R, A, S
+     *  @typedef {import("./create-monster").MonsterCreatorParam<N, K, C, O, R, A, S>} MonsterCreatorParam
+     */
+    /**
+     *  @template N, K, O, R, A, S
+     *  @typedef {import("./redux-monster").ReduxMonster<N, K, O, R, A, S>} ReduxMonster
+     */
+    /**
+     *  @template O
+     *  @typedef {import("./redux-monster").ReduxReducer<O>} ReduxReducer
+     */
+
     var _slice = Array.prototype.slice;
 
     /**
-     *  @template O, R, A, S
-     *  @typedef {import("./create-monster").MonsterCreatorParam} MonsterCreatorParam
-     */
-    /**
-     *  @template O, R, A, S
-     *  @typedef {import("./redux-monster").ReduxMonster} ReduxMonster
-     */
-    /**
-     *  @typedef {import("./redux-monster").ReduxReducer} AnyReduxReducer
-     */
-
-    /**
-     *  @template O, R, A, S
-     *  @param {MonsterCreatorParam<O, R, A, S>} param
+     *  @template N, K, C, O, R, A, S
+     *  @param {MonsterCreatorParam<N, K, C, O, R, A, S>} param
      */
     function createMonster(param)
     {
         var context = param.context;
 
         /**
-         *  @type {ReduxMonster<O, R, A, S>}
+         *  @type {ReduxMonster<N, K, O, R, A, S>}
          */
         var monster = {
             name : param.name,
@@ -122,28 +123,30 @@ module.exports = (function ()
     }
 
     /**
-     *  @param {Record<string, AnyReduxReducer>} reducerMap
+     *  @template O
+     *  @param {Record<string, ReduxReducer<O>>} reducerMap
+     *  @param {O} [initialState]
      */
     function _composeReducers(reducerMap)
     {
-        var initialState = arguments[1];
+        /** @type {O} */var initialState = arguments[1];
         if("undefined" === typeof initialState)
         {
             initialState = null;
         }
 
-        return function (state, action)
+        return /** @type {ReduxReducer<O>} */(function (state, action)
         {
             var nextState = state;
 
             var type = action.type;
-            if(
-                "string" === typeof type
-                && type in reducerMap
-                && "function" === typeof reducerMap[type]
-            )
+            if("string" === typeof type)
             {
-                nextState = reducerMap[type](state, action);
+                var reducer = reducerMap[type];
+                if("function" === typeof reducer)
+                {
+                    nextState = reducer(state, action);
+                }
             }
 
             if("undefined" === typeof nextState)
@@ -152,7 +155,7 @@ module.exports = (function ()
             }
 
             return nextState;
-        };
+        });
     }
 
     return {
