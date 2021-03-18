@@ -1,6 +1,6 @@
 {
     "name": "redux-monster",
-    "version": "0.3.2",
+    "version": "0.4.0",
     "description": "A proposal for modularization ecosystem of redux component packages.",
     "author": "Hydrawisk793 <hyw793@gmail.com>",
     "license": "MIT",
