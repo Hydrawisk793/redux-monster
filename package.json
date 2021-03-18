@@ -29,7 +29,7 @@
     "bundledDependencies": [],
     "dependencies": {
         "kaphein-js": "~0.14.3",
-        "kaphein-js-event-emitter": "~0.1.2",
+        "kaphein-js-event-emitter": "~0.1.3",
         "kaphein-ts-type-utils": "~0.1.0"
     },
     "peerDependencies": {
