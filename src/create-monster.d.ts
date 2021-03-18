@@ -1,114 +1,169 @@
-import { PickExtends, PickReturnTypes } from "./ts-utils";
-import { ReduxReducer, ReduxActionCreator, ReduxSelector, ReduxMonster } from "./redux-monster";
+import { Assign, ExtractExtends, PickExtends } from "kaphein-ts-type-utils";
+
+import {
+    PickReturnTypes,
+} from "./type-utils";
+import {
+    ReduxReducer,
+    ReduxActionCreator,
+    ReduxSelector,
+    ReduxMonster,
+    AnyReduxMonster,
+    AnyReduxSelector,
+} from "./redux-monster";
+import {
+    ReduxMonsterRegistry,
+} from "./redux-monster-registry";
 
 export declare interface createMonster<
-    Context = any,
+    Name extends string = string,
+    OwnStateKey extends string = Name,
+    Context = {},
     OwnState = any,
-    ReducerFactories = Record<string, ReducerFactory<OwnState, Context>>,
-    ActionCreatorFactories = Record<string, ActionCreatorFactory<Context>>,
-    SelectorFactories = Record<string, SelectorFactory<OwnState, Context>>
+    Reducers = Record<string, ReduxReducer<OwnState>>,
+    ActionCreatorFactories = Record<
+        string,
+        ActionCreatorFactory<Assign<FactoredReduxMonsterDefaultContext, Context>>
+    >,
+    SelectorFactories = Record<
+        string,
+        SelectorFactory<
+            Assign<FactoredReduxMonsterDefaultContext, Context>,
+            OwnState
+        >
+    >
 >
 {
     (
         param : MonsterCreatorParam<
+            Name,
+            OwnStateKey,
             Context,
             OwnState,
-            ReducerFactories,
+            Reducers,
             ActionCreatorFactories,
             SelectorFactories
         >
-    ) : FactoredMonster<
-        Context,
+    ) : ReduxMonster<
+        Name,
+        OwnStateKey,
         OwnState,
-        ReducerFactories,
-        ActionCreatorFactories,
-        SelectorFactories
+        Reducers,
+        PickReturnTypes<ActionCreatorFactories>,
+        FactoredReduxSelectorMap<PickReturnTypes<SelectorFactories>>
     >;
 }
 
 export declare function createMonster<
-    Context = any,
+    Name extends string = string,
+    OwnStateKey extends string = Name,
+    Context = {},
     OwnState = any,
-    ReducerFactories = Record<string, ReducerFactory<OwnState, Context>>,
-    ActionCreatorFactories = Record<string, ActionCreatorFactory<Context>>,
-    SelectorFactories = Record<string, SelectorFactory<OwnState, Context>>
+    Reducers = Record<string, ReduxReducer<OwnState>>,
+    ActionCreatorFactories = Record<
+        string,
+        ActionCreatorFactory<Assign<FactoredReduxMonsterDefaultContext, Context>>
+    >,
+    SelectorFactories = Record<
+        string,
+        SelectorFactory<
+            Assign<FactoredReduxMonsterDefaultContext, Context>,
+            OwnState
+        >
+    >
 >(
     param : MonsterCreatorParam<
+        Name,
+        OwnStateKey,
         Context,
         OwnState,
-        ReducerFactories,
+        Reducers,
         ActionCreatorFactories,
         SelectorFactories
     >
-) : FactoredMonster<
-    Context,
+) : ReduxMonster<
+    Name,
+    OwnStateKey,
     OwnState,
-    ReducerFactories,
-    ActionCreatorFactories,
-    SelectorFactories
->;
-
-export declare type FactoredMonster<
-    Context = any,
-    OwnState = any,
-    ReducerFactories = Record<string, ReducerFactory<OwnState, Context>>,
-    ActionCreatorFactories = Record<string, ActionCreatorFactory<Context>>,
-    SelectorFactories = Record<string, SelectorFactory<OwnState, Context>>,
-> = ReduxMonster<
-    OwnState,
-    PickReturnTypes<ReducerFactories>,
+    Reducers,
     PickReturnTypes<ActionCreatorFactories>,
-    PickReturnTypes<SelectorFactories>
+    FactoredReduxSelectorMap<PickReturnTypes<SelectorFactories>>
 >;
 
 export declare interface MonsterCreatorParam<
-    Context = any,
+    Name extends string = string,
+    OwnStateKey extends string = Name,
+    Context = {},
     OwnState = any,
-    ReducerFactories = Record<string, ReducerFactory<OwnState, Context>>,
-    ActionCreatorFactories = Record<string, ActionCreatorFactory<Context>>,
-    SelectorFactories = Record<string, SelectorFactory<OwnState, Context>>,
+    Reducers = Record<string, ReduxReducer<OwnState>>,
+    ActionCreatorFactories = Record<
+        string,
+        ActionCreatorFactory<Assign<FactoredReduxMonsterDefaultContext, Context>>
+    >,
+    SelectorFactories = Record<
+        string,
+        SelectorFactory<
+            Assign<FactoredReduxMonsterDefaultContext, Context>,
+            OwnState
+        >
+    >
 >
 {
-    name : string;
+    name : Name;
 
-    ownStateKey? : string;
+    ownStateKey? : OwnStateKey;
 
     context? : Context;
 
     initialState? : OwnState;
 
-    reducerFactories? : PickExtends<
-        ReducerFactories,
-        ReducerFactory<OwnState, Context>
+    reducers? : PickExtends<
+        Reducers,
+        ReduxReducer<OwnState>
     >;
 
     actionCreatorFactories? : PickExtends<
         ActionCreatorFactories,
-        ActionCreatorFactory<Context>
+        ActionCreatorFactory<Assign<FactoredReduxMonsterDefaultContext, Context>>
     >;
 
     selectorFactories? : PickExtends<
         SelectorFactories,
-        SelectorFactory<OwnState, Context>
+        SelectorFactory<
+            Assign<FactoredReduxMonsterDefaultContext, Context>,
+            OwnState
+        >
     >;
 }
 
-export declare type ReducerFactory<
-    OwnState = any,
-    Context = any
-> = (
-    context : Context
-) => ReduxReducer<OwnState>;
-
 export declare type ActionCreatorFactory<
-    Context = any
+    Context = Assign<FactoredReduxMonsterDefaultContext, {}>
 > = (
     context : Context
 ) => ReduxActionCreator;
 
 export declare type SelectorFactory<
-    OwnState = any,
-    Context = any
+    Context = Assign<FactoredReduxMonsterDefaultContext, {}>,
+    OwnState = any
 > = (
     context : Context
 ) => ReduxSelector<OwnState>;
+
+export declare interface FactoredReduxMonsterDefaultContext
+{
+    monster : AnyReduxMonster;
+}
+
+export declare type FactoredReduxSelectorMap<
+    Selectors = Record<string, AnyReduxSelector>,
+    ReduxStoreState = any
+> = Omit<
+    {
+        [K in keyof Selectors] : (
+            Selectors[K] extends ReduxSelector<infer S, infer RestArgs, infer R>
+                ? ReduxSelector<ReduxStoreState, RestArgs, R>
+                : never
+        );
+    },
+    never
+>;

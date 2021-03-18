@@ -1,16 +1,22 @@
-import { PickExtends } from "./ts-utils";
-import { FluxStandardAction } from "./flux-standard-action";
+import { PickExtends } from "kaphein-ts-type-utils";
+
+import {
+    FluxStandardAction,
+    AnyFluxStandardAction,
+} from "./flux-standard-action";
 
 export declare interface ReduxMonster<
+    Name extends string = string,
+    OwnStateKey extends string = Name,
     OwnState = any,
     Reducers = Record<string, ReduxReducer<OwnState>>,
     ActionCreators = Record<string, ReduxActionCreator>,
-    Selectors = Record<string, ReduxSelector<OwnState>>
+    Selectors = Record<string, AnyReduxSelector>
 >
 {
-    name : string;
+    name : Name;
 
-    ownStateKey : string;
+    ownStateKey : OwnStateKey;
 
     initialState : OwnState;
 
@@ -35,33 +41,48 @@ export declare interface ReduxMonster<
 
     selectors : PickExtends<
         Selectors,
-        ReduxSelector<OwnState>
+        AnyReduxSelector
     >;
 }
 
+export declare type AnyReduxMonster = ReduxMonster<
+    string,
+    string,
+    any,
+    Record<string, ReduxReducer<any>>,
+    Record<string, ReduxActionCreator>,
+    Record<string, AnyReduxSelector>
+>;
+
 export declare type ReduxReducer<
     S = any,
-    P = any,
+    A extends FluxStandardAction = AnyFluxStandardAction,
     R = S
 > = (
     state : S,
-    action : FluxStandardAction<P>
+    action : A
 ) => R;
+
+export declare type AnyReduxReducer = ReduxReducer<
+    any,
+    AnyFluxStandardAction
+>;
 
 export declare type ReduxActionCreator = (
     ...args : any[]
 ) => any;
 
-/**
- *  @deprecated Use 'ReduxActionCreator' type instead.
- */
-export declare type ActionCreator = (
-    ...args : any[]
-) => any;
-
 export declare type ReduxSelector<
-    State = any
+    State = any,
+    RestArgs extends Array<any> = any[],
+    R = any
 > = (
     state : State,
-    ...args : any[]
-) => any;
+    ...args : RestArgs
+) => R;
+
+export declare type AnyReduxSelector = ReduxSelector<
+    any,
+    any[],
+    any
+>;

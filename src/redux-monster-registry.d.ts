@@ -1,10 +1,19 @@
 import { EventListenable } from "kaphein-js-event-emitter";
 import { Store } from "redux";
 
-import { FluxStandardAction } from "./flux-standard-action";
-import { ReduxMonster, ReduxReducer } from "./redux-monster";
+import {
+    FluxStandardAction,
+    AnyFluxStandardAction,
+} from "./flux-standard-action";
+import {
+    ReduxMonster,
+    ReduxReducer
+} from "./redux-monster";
 
-export declare class ReduxMonsterRegistry implements EventListenable<ReduxMonsterRegistryEventListenerMap>
+export declare class ReduxMonsterRegistry
+    implements EventListenable<
+        ReduxMonsterRegistryEventListenerMap
+    >
 {
     public static findFromReduxStore(
         reduxStore : Store
@@ -40,6 +49,8 @@ export declare class ReduxMonsterRegistry implements EventListenable<ReduxMonste
         listener : ReduxMonsterRegistryEventListenerMap[K]
     ) : this;
 
+    public getReduxStore() : Store;
+
     public getMonsterNames() : string[];
 
     public getMonster(
@@ -57,21 +68,28 @@ export declare class ReduxMonsterRegistry implements EventListenable<ReduxMonste
     ) : void;
 
     public setReducerEnhancer(
-        reducerEnhancer : ReduxReducerEnhancer | null
+        reducerEnhancer : AnyReduxReducerEnhancer | null
     ) : void;
 }
 
 export declare interface ReduxMonsterRegistryOption
 {
-    reducerEnhancer? : ReduxReducerEnhancer | null;
+    reducerEnhancer? : AnyReduxReducerEnhancer | null;
 }
 
 export declare type ReduxReducerEnhancer<
     S = any,
-    A extends FluxStandardAction = FluxStandardAction
+    A extends FluxStandardAction = AnyFluxStandardAction,
+    R = S
 > = (
-    reducer : ReduxReducer<S, A>
-) => ReduxReducer<S, A>;
+    reducer : ReduxReducer<S, A, R>
+) => ReduxReducer<S, A, R>;
+
+export declare type AnyReduxReducerEnhancer = ReduxReducerEnhancer<
+    any,
+    AnyFluxStandardAction,
+    any
+>;
 
 export declare enum ReduxMonsterRegistryMonsterStateOption
 {
@@ -100,5 +118,7 @@ export declare interface ReduxMonsterRegistryEventMap
 }
 
 export declare type ReduxMonsterRegistryEventListenerMap = {
-    [K in keyof ReduxMonsterRegistryEventMap] : (e : ReduxMonsterRegistryEventMap[K]) => void
+    [K in keyof ReduxMonsterRegistryEventMap] : (
+        e : ReduxMonsterRegistryEventMap[K]
+    ) => void
 };
