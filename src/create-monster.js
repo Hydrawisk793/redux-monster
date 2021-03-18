@@ -24,8 +24,6 @@ module.exports = (function ()
      */
     function createMonster(param)
     {
-        var context = param.context;
-
         /**
          *  @type {ReduxMonster<N, K, O, R, A, S>}
          */
@@ -58,28 +56,16 @@ module.exports = (function ()
                     })
                 ).toRecord()
             ),
-            actionCreators : (
-                new StringKeyMap(Object
-                    .entries(param.actionCreatorFactories || {})
-                    .map(function (pair)
-                    {
-                        var funcGen = pair[1];
-                        var func = ("function" === typeof funcGen ? funcGen(context) : null);
-
-                        return (
-                            "function" === typeof func
-                                ? [pair[0], func]
-                                : null
-                        );
-                    })
-                    .filter(function (pair)
-                    {
-                        return !!pair;
-                    })
-                ).toRecord()
-            ),
+            actionCreators : null,
             selectors : null
         };
+
+        var context = Object.assign(
+            {
+                monster : monster
+            },
+            param.context
+        );
 
         monster.actionTypes = Object.keys(monster.reducers).reduce(function (acc, key)
         {
@@ -90,34 +76,51 @@ module.exports = (function ()
 
         monster.reducer = _composeReducers(monster.reducers, param.initialState);
 
-        monster.selectors = (
-            new StringKeyMap(Object
-                .entries(param.selectorFactories || {})
-                .map(function (pair)
-                {
-                    var selFact = pair[1];
-                    var sel = ("function" === typeof selFact ? selFact(context) : null);
-                    var finalSel = (
-                        "function" === typeof sel
-                            ? function (state)
-                            {
-                                return sel.apply(void 0, [state[monster.ownStateKey]].concat(_slice.call(arguments, 1)));
-                            }
-                            : null
-                    );
+        monster.actionCreators = new StringKeyMap(Object
+            .entries(param.actionCreatorFactories || {})
+            .map(function (pair)
+            {
+                var funcGen = pair[1];
+                var func = ("function" === typeof funcGen ? funcGen(context) : null);
 
-                    return (
-                        "function" === typeof finalSel
-                            ? [pair[0], finalSel]
-                            : null
-                    );
-                })
-                .filter(function (pair)
-                {
-                    return !!pair;
-                })
-            ).toRecord()
-        );
+                return (
+                    "function" === typeof func
+                        ? [pair[0], func]
+                        : null
+                );
+            })
+            .filter(function (pair)
+            {
+                return !!pair;
+            })
+        ).toRecord();
+
+        monster.selectors = new StringKeyMap(Object
+            .entries(param.selectorFactories || {})
+            .map(function (pair)
+            {
+                var selFact = pair[1];
+                var sel = ("function" === typeof selFact ? selFact(context) : null);
+                var finalSel = (
+                    "function" === typeof sel
+                        ? function (state)
+                        {
+                            return sel.apply(void 0, [state[monster.ownStateKey]].concat(_slice.call(arguments, 1)));
+                        }
+                        : null
+                );
+
+                return (
+                    "function" === typeof finalSel
+                        ? [pair[0], finalSel]
+                        : null
+                );
+            })
+            .filter(function (pair)
+            {
+                return !!pair;
+            })
+        ).toRecord();
 
         return monster;
     }

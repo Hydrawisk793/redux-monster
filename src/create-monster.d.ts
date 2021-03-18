@@ -1,4 +1,4 @@
-import { PickExtends } from "kaphein-ts-type-utils";
+import { Assign, PickExtends } from "kaphein-ts-type-utils";
 
 import {
     PickReturnTypes,
@@ -17,11 +17,20 @@ import {
 export declare interface createMonster<
     Name extends string = string,
     OwnStateKey extends string = Name,
-    Context = any,
+    Context = {},
     OwnState = any,
     Reducers = Record<string, ReduxReducer<OwnState>>,
-    ActionCreatorFactories = Record<string, ActionCreatorFactory<Context>>,
-    SelectorFactories = Record<string, SelectorFactory<Context, OwnState>>
+    ActionCreatorFactories = Record<
+        string,
+        ActionCreatorFactory<Assign<FactoredReduxMonsterDefaultContext, Context>>
+    >,
+    SelectorFactories = Record<
+        string,
+        SelectorFactory<
+            Assign<FactoredReduxMonsterDefaultContext, Context>,
+            OwnState
+        >
+    >
 >
 {
     (
@@ -47,11 +56,20 @@ export declare interface createMonster<
 export declare function createMonster<
     Name extends string = string,
     OwnStateKey extends string = Name,
-    Context = any,
+    Context = {},
     OwnState = any,
     Reducers = Record<string, ReduxReducer<OwnState>>,
-    ActionCreatorFactories = Record<string, ActionCreatorFactory<Context>>,
-    SelectorFactories = Record<string, SelectorFactory<Context, OwnState>>
+    ActionCreatorFactories = Record<
+        string,
+        ActionCreatorFactory<Assign<FactoredReduxMonsterDefaultContext, Context>>
+    >,
+    SelectorFactories = Record<
+        string,
+        SelectorFactory<
+            Assign<FactoredReduxMonsterDefaultContext, Context>,
+            OwnState
+        >
+    >
 >(
     param : MonsterCreatorParam<
         Name,
@@ -74,11 +92,20 @@ export declare function createMonster<
 export declare interface MonsterCreatorParam<
     Name extends string = string,
     OwnStateKey extends string = Name,
-    Context = any,
+    Context = {},
     OwnState = any,
     Reducers = Record<string, ReduxReducer<OwnState>>,
-    ActionCreatorFactories = Record<string, ActionCreatorFactory<Context>>,
-    SelectorFactories = Record<string, SelectorFactory<Context, OwnState>>
+    ActionCreatorFactories = Record<
+        string,
+        ActionCreatorFactory<Assign<FactoredReduxMonsterDefaultContext, Context>>
+    >,
+    SelectorFactories = Record<
+        string,
+        SelectorFactory<
+            Assign<FactoredReduxMonsterDefaultContext, Context>,
+            OwnState
+        >
+    >
 >
 {
     name : Name;
@@ -96,24 +123,32 @@ export declare interface MonsterCreatorParam<
 
     actionCreatorFactories? : PickExtends<
         ActionCreatorFactories,
-        ActionCreatorFactory<Context>
+        ActionCreatorFactory<Assign<FactoredReduxMonsterDefaultContext, Context>>
     >;
 
     selectorFactories? : PickExtends<
         SelectorFactories,
-        SelectorFactory<Context, OwnState>
+        SelectorFactory<
+            Assign<FactoredReduxMonsterDefaultContext, Context>,
+            OwnState
+        >
     >;
 }
 
 export declare type ActionCreatorFactory<
-    Context = any
+    Context = Assign<FactoredReduxMonsterDefaultContext, {}>
 > = (
     context : Context
 ) => ReduxActionCreator;
 
 export declare type SelectorFactory<
-    Context = any,
+    Context = Assign<FactoredReduxMonsterDefaultContext, {}>,
     OwnState = any
 > = (
     context : Context
 ) => ReduxSelector<OwnState>;
+
+export declare interface FactoredReduxMonsterDefaultContext
+{
+    monster : AnyReduxMonster;
+}
