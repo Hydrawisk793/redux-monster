@@ -1,5 +1,6 @@
+import { PickExtends } from "kaphein-ts-type-utils";
+
 import {
-    PickExtends,
     PickReturnTypes,
 } from "./type-utils";
 import {
@@ -7,7 +8,11 @@ import {
     ReduxActionCreator,
     ReduxSelector,
     ReduxMonster,
+    AnyReduxMonster,
 } from "./redux-monster";
+import {
+    ReduxMonsterRegistry,
+} from "./redux-monster-registry";
 
 export declare interface createMonster<
     Name extends string = string,

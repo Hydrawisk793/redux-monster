@@ -1,4 +1,5 @@
-import { PickExtends } from "./type-utils";
+import { PickExtends } from "kaphein-ts-type-utils";
+
 import {
     FluxStandardAction,
     AnyFluxStandardAction,
