@@ -119,6 +119,11 @@ module.exports = (function ()
             return this;
         },
 
+        getReduxStore : function getReduxStore()
+        {
+            return this._reduxStore;
+        },
+
         getMonsterNames : function getMonsterNames()
         {
             return this._registrations.map(function (registration)
