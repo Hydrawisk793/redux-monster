@@ -160,7 +160,7 @@ module.exports = (function ()
             {
                 if(replaceExistingOne)
                 {
-                    this.unregisterMonster(monsterName);
+                    _unregisterMonster(this, monsterName, true);
                 }
                 else
                 {
@@ -219,21 +219,7 @@ module.exports = (function ()
 
         unregisterMonster : function unregisterMonster(name)
         {
-            var monster = this.getMonster(name);
-            if(monster)
-            {
-                this._registrations["delete"](name);
-
-                _replaceReducer(this);
-
-                this._evtEmt.emit(
-                    "monsterUnregistered",
-                    {
-                        source : this,
-                        monster : monster
-                    }
-                );
-            }
+            return _unregisterMonster(this, name, false);
         },
 
         setReducerEnhancer : function setReducerEnhancer(reducerEnhancer)
@@ -317,6 +303,34 @@ module.exports = (function ()
                 {}
             )
         ;
+    }
+
+    /**
+     *  @param {ReduxMonsterRegistry} thisRef
+     *  @param {string} name
+     */
+    function _unregisterMonster(thisRef, name)
+    {
+        var doNotReplaceReducer = !!arguments[2];
+
+        var monster = thisRef.getMonster(name);
+        if(monster)
+        {
+            thisRef._registrations["delete"](name);
+
+            if(!doNotReplaceReducer)
+            {
+                _replaceReducer(thisRef);
+            }
+
+            thisRef._evtEmt.emit(
+                "monsterUnregistered",
+                {
+                    source : thisRef,
+                    monster : monster
+                }
+            );
+        }
     }
 
     /**
