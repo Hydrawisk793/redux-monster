@@ -273,7 +273,7 @@ module.exports = (function ()
         {
             if(oldReduxStore !== reduxStore)
             {
-                _setReduxStore(thisRef);
+                _setReduxStore(thisRef, null);
 
                 thisRef._reduxStore = reduxStore;
 
@@ -345,7 +345,7 @@ module.exports = (function ()
         if(reduxStore)
         {
             var newReducer = _combineReducers(thisRef, _getReducerMap(thisRef), initialState);
-            var reducerEnhancer = this._reducerEnhancer;
+            var reducerEnhancer = thisRef._reducerEnhancer;
             var enhancedReducer = (
                 isFunction(reducerEnhancer)
                     ? reducerEnhancer(newReducer)
